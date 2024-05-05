@@ -44,24 +44,53 @@ use crate::parse_tree::*;
 /// ```
 #[derive(Default)]
 pub struct Printer {
-	// TODO: eventuell notwendige Attribute aufnehmen
+    output: String,
 }
 
 impl Printer {
-	/// Folds the entire parse tree starting from a [`Root`] object into a
-	/// single string.
-	///
-	/// Traverses the tree, visiting each statement and expression to generate
-	/// formatted strings, and then concatenates these strings into a single
-	/// result separated by newlines.
-	pub fn format(&mut self, _t: &Root) -> String {
-		todo!("Zeichenkette durch Ablaufen des Baums bestimmen")
-	}
+    pub fn format(&mut self, root: &Root) -> String {
+        self.visit_root(root)
+    }
 }
 
 impl Visitor for Printer {
-	// TODO: relevante Methoden überschreiben
+    fn visit_root(&mut self, r: &Root) -> String {
+        self.output.clear();  // Ensure the output starts empty
+
+        let statements: Vec<String> = r.stmt_list.iter()
+            .map(|stmt| self.visit_stmt(stmt))  // Collect the formatted statements
+            .collect();
+
+        self.output = statements.join("\n");  // Join all statements with new lines
+        self.output.clone()  // Return the output
+    }
+
+    fn visit_stmt(&mut self, s: &Stmt) -> String {
+        match s {
+            Stmt::Expr(expr) => self.visit_expr(expr),
+            Stmt::Set(var, expr) => format!("{}={}", var, self.visit_expr(expr)),
+        }
+    }
+
+    fn visit_expr(&mut self, e: &Expr) -> String {
+        match e {
+            Expr::Int(n) => n.to_string(),
+            Expr::Var(v) => v.to_string(),
+            Expr::Add(lhs, rhs) => format!("({}+{})", self.visit_expr(lhs), self.visit_expr(rhs)),
+            Expr::Sub(lhs, rhs) => format!("({}-{})", self.visit_expr(lhs), self.visit_expr(rhs)),
+            Expr::Mul(lhs, rhs) => format!("({}*{})", self.visit_expr(lhs), self.visit_expr(rhs)),
+            Expr::Div(lhs, rhs) => format!("({}/{})", self.visit_expr(lhs), self.visit_expr(rhs)),
+        }
+    }
 }
+
+
+trait Visitor {
+    fn visit_root(&mut self, r: &Root) -> String;
+    fn visit_stmt(&mut self, s: &Stmt) -> String;
+    fn visit_expr(&mut self, e: &Expr) -> String;
+}
+
 
 // unit-tests
 

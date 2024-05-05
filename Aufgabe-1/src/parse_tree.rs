@@ -81,57 +81,78 @@ pub enum Error {
 }
 
 impl Root {
-	/// Parses a string into a `Root` struct, constructing a list of statements.
-	///
-	/// This method uses a simple stack-based parser to convert strings in
-	/// [reverse polish notation] into statements and expressions.
-	/// 
-	/// Returns an error if the parsing fails due to invalid input.
-	/// 
-	/// [reverse polish notation]: https://en.wikipedia.org/wiki/Reverse_Polish_notation
-	pub fn from_str(str: &str) -> Result<Self, Error> {
-		// TODO: Funktionskörper vervollständigen
-		let mut stmt_list = Vec::new();
-		let mut expr_stack = Vec::new();
-		
-		for c in str.chars() {
-			match c {
-				c if c.is_whitespace() => {}
-				c if c.is_digit(10) => {
-					todo!("Ziffer in Zahl konvertieren und auf den Stapel legen")
-				}
-				c if c.is_ascii_lowercase() => {
-					todo!("Variablenname auf den Stapel legen")
-				}
-				'+' => {
-					todo!("Additionsknoten auf den Stapel legen")
-				}
-				'-' => {
-					todo!("Subtraktionsknoten auf den Stapel legen")
-				}
-				'*' => {
-					todo!("Multiplikationsknoten auf den Stapel legen")
-				}
-				'/' => {
-					todo!("Divisionsknoten auf den Stapel legen")
-				}
-				'=' => {
-					todo!("Zuweisungsknoten auf den Stapel legen");
-				}
-				_ => todo!("geeigneten Fehlercode zurückgeben"),
-			}
-		}
-		
-		if let Some(expr) = expr_stack.pop() {
-			stmt_list.push(Stmt::Expr(expr));
-		}
-		
-		if !expr_stack.is_empty() {
-			todo!("geeigneten Fehlercode zurückgeben")
-		} else {
-			Ok(Root { stmt_list })
-		}
-	}
+    /// Parses a string into a `Root` struct, constructing a list of statements.
+    ///
+    /// This method uses a simple stack-based parser to convert strings in
+    /// [reverse polish notation] into statements and expressions.
+    /// 
+    /// Returns an error if the parsing fails due to invalid input.
+    /// 
+    /// [reverse polish notation]: https://en.wikipedia.org/wiki/Reverse_Polish_notation
+    pub fn from_str(input: &str) -> Result<Self, Error> {
+        let mut stmt_list = Vec::new();
+        let mut expr_stack: Vec<Expr> = Vec::new();
+
+        let mut temp_num = String::new();
+
+        for c in input.chars() {
+            match c {
+                ' ' => {
+                    if !temp_num.is_empty() {
+                        let number = temp_num.parse::<i64>()
+                            .map_err(|_| Error::Lexical)?;
+                        expr_stack.push(Expr::Int(number));
+                        temp_num.clear();
+                    }
+                },
+                c if c.is_digit(10) => {
+					// print!("found digit: {}", c);
+                    temp_num.push(c);
+                },
+                c if c.is_ascii_lowercase() => {
+                    expr_stack.push(Expr::Var(c));
+                },
+                '+' | '-' | '*' | '/' => {
+                    let right = expr_stack.pop().ok_or(Error::Syntax)?;
+                    let left = expr_stack.pop().ok_or(Error::Syntax)?;
+                    let expr = match c {
+                        '+' => Expr::Add(Box::new(left), Box::new(right)),
+                        '-' => Expr::Sub(Box::new(left), Box::new(right)),
+                        '*' => Expr::Mul(Box::new(left), Box::new(right)),
+                        '/' => Expr::Div(Box::new(left), Box::new(right)),
+                        _ => return Err(Error::Lexical), // This should not happen
+                    };
+                    expr_stack.push(expr);
+                },
+                '=' => {
+                    let value = expr_stack.pop().ok_or(Error::Syntax)?;
+                    if let Expr::Var(var) = expr_stack.pop().ok_or(Error::Semantic)? {
+                        stmt_list.push(Stmt::Set(var, value));
+                    } else {
+                        return Err(Error::Semantic);
+                    }
+                },
+                _ => return Err(Error::Lexical),
+            }
+        }
+
+        if !temp_num.is_empty() {
+            let number = temp_num.parse::<i64>()
+                .map_err(|_| Error::Lexical)?;
+            expr_stack.push(Expr::Int(number));
+        }
+
+        // If there is any remaining expression that wasn't included in an assignment, consider it an expression statement.
+        if let Some(expr) = expr_stack.pop() {
+            if expr_stack.is_empty() {
+                stmt_list.push(Stmt::Expr(expr));
+            } else {
+                return Err(Error::Syntax); // More than one expression left without being used in an assignment.
+            }
+        }
+
+        Ok(Root { stmt_list })
+    }
 }
 
 /// Provides a visitor for traversing the parse tree.

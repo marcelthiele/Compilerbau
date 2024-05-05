@@ -15,6 +15,8 @@
 //! println!("Final result: {}", result); // prints 7
 //! ```
 
+use std::collections::HashMap;
+
 use crate::parse_tree::*;
 
 /// `Calculator` is a struct designed to evaluate parsed arithmetic expressions.
@@ -29,21 +31,64 @@ use crate::parse_tree::*;
 /// # }
 /// ```
 #[derive(Default)]
-pub struct Calculator {
-	// TODO: eventuell notwendige Attribute aufnehmen
+pub struct Calculator{
+	variables: HashMap<char, i64>,
 }
 
 impl Calculator {
-	/// Evaluates the entire parse tree starting from a [`Root`] and returns the
-	/// result of the last expression evaluated.
-	pub fn calc(&mut self, _t: &Root) -> i64 {
-		todo!("Ergebnis durch Ablaufen des Baums bestimmen")
-	}
+    pub fn calc(&mut self, root: &Root) -> i64 {
+        self.visit_root(root)
+    }
 }
 
 impl Visitor for Calculator {
-	// TODO: relevante Methoden überschreiben
+    fn visit_root(&mut self, r: &Root) -> i64 {
+        let mut last_value = 0;
+        for stmt in &r.stmt_list {
+            last_value = self.visit_stmt(stmt);
+        }
+        last_value
+    }
+
+    fn visit_stmt(&mut self, s: &Stmt) -> i64 {
+        match s {
+            Stmt::Expr(expr) => self.visit_expr(expr),
+            Stmt::Set(var, expr) => {
+                let val = self.visit_expr(expr);
+                self.variables.insert(*var, val);  // Store the value in the variable
+                // val
+				0
+            },
+        }
+    }
+
+    fn visit_expr(&mut self, e: &Expr) -> i64 {
+        match e {
+            Expr::Int(n) => *n,
+            Expr::Var(v) => *self.variables.get(v).unwrap_or(&0),  // Retrieve the value, default to 0
+            Expr::Add(lhs, rhs) => self.visit_expr(lhs) + self.visit_expr(rhs),
+            Expr::Sub(lhs, rhs) => self.visit_expr(lhs) - self.visit_expr(rhs),
+            Expr::Mul(lhs, rhs) => self.visit_expr(lhs) * self.visit_expr(rhs),
+            Expr::Div(lhs, rhs) => {
+                let divisor = self.visit_expr(rhs);
+                if divisor != 0 {
+                    self.visit_expr(lhs) / divisor
+                } else {
+                    panic!("attempt to divide by zero"); // Handle division by zero as needed
+                }
+            }
+        }
+    }
 }
+
+
+
+trait Visitor {
+    fn visit_root(&mut self, r: &Root) -> i64;
+    fn visit_stmt(&mut self, s: &Stmt) -> i64;
+    fn visit_expr(&mut self, e: &Expr) -> i64;
+}
+
 
 // unit-tests
 
