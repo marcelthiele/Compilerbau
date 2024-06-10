@@ -1,4 +1,5 @@
-//! The C1 parser, implemented with the parser generator LALRPOP.
+// parser.lalrpop
+//! A simple parser for a C-like language, implemented with LALRPOP.
 
 use crate::{ast, lexer::{Token, LexicalError}};
 
@@ -9,6 +10,7 @@ extern {
     type Error = LexicalError;
 
     enum Token {
+        // Keywords
         "bool" => Token::KwBool,
         "do" => Token::KwDo,
         "else" => Token::KwElse,
@@ -20,6 +22,8 @@ extern {
         "return" => Token::KwReturn,
         "void" => Token::KwVoid,
         "while" => Token::KwWhile,
+
+        // Operators
         "+" => Token::Add,
         "-" => Token::Sub,
         "*" => Token::Mul,
@@ -33,6 +37,8 @@ extern {
         ">=" => Token::Geq,
         "&&" => Token::LogAnd,
         "||" => Token::LogOr,
+
+        // Punctuation
         "," => Token::Comma,
         ";" => Token::Semicolon,
         "(" => Token::LParen,
@@ -40,6 +46,7 @@ extern {
         "{" => Token::LBrace,
         "}" => Token::RBrace,
 
+        // Literals and identifiers
         "int_literal" => Token::IntLiteral(<i64>),
         "float_literal" => Token::FloatLiteral(<f64>),
         "bool_literal" => Token::BoolLiteral(<bool>),
@@ -49,9 +56,228 @@ extern {
     }
 }
 
-// top-level grammar rule
 pub Program: ast::Program = {
     Item* => ast::Program { items: <> }
 };
 
-Item: ast::Item = {};
+Item: ast::Item = {
+    FunctionDefinition => ast::Item::Func(<>),
+    <DeclAssignment> ";" => ast::Item::GlobalVar(<>),
+};
+
+FunctionDefinition: ast::FuncDef = {
+    <return_type: Type> <ident: Identifier> "(" <mut params:(<Parameter> ",")*> <e:Parameter?> ")" "{" <statements: StatementList> "}" => {
+        if let Some(a) = e {
+            params.push(a);
+        }
+
+        ast::FuncDef {
+            return_type,
+            ident,
+            params,
+            statements,
+         }
+    }
+};
+
+Parameter: ast::FuncParam = {
+    <data_type: Type> <ident: "ident"> => ast::FuncParam {
+        data_type,
+        ident: ast::Ident(ident),
+    }
+};
+
+StatementList: Vec<ast::Stmt> = {
+    <params: Statement*> => {
+        let mut param = Vec::new();
+        for p in &params {
+            param.push(*p.clone());
+        }
+        return param;
+    }
+};
+
+Statement: Box<ast::Stmt> = {
+    ClosedStatement => <>,
+    OpenStatement => <>,
+};
+
+OpenStatement: Box<ast::Stmt> = {
+    "if" "(" <cond: Expr> ")" <if_true: Statement> => Box::new(ast::Stmt::If(ast::IfStmt {
+        cond,
+        if_true,
+        if_false: None,
+    })),
+    "if" "(" <cond: Expr> ")" <if_true: ClosedStatement> "else" <if_false: OpenStatement> => Box::new(ast::Stmt::If(ast::IfStmt {
+        cond,
+        if_true,
+        if_false: Some(if_false),
+    })),
+    "while" "(" <cond: Expr> ")" <body: OpenStatement> => Box::new(ast::Stmt::While(ast::WhileStmt {
+        cond,
+        body
+    })),
+};
+
+ClosedStatement: Box<ast::Stmt> = {
+    SimpleStatement => <>,
+    "if" "(" <cond: Expr> ")" <if_true: ClosedStatement> "else" <if_false: ClosedStatement> => Box::new(ast::Stmt::If(ast::IfStmt {
+        cond,
+        if_true,
+        if_false: Some(if_false),
+    })),
+    "while" "(" <cond: Expr> ")" <body: ClosedStatement> => Box::new(ast::Stmt::While(ast::WhileStmt {
+        cond,
+        body
+    })),
+};
+
+SimpleStatement: Box<ast::Stmt> = {
+    ";" => Box::new(ast::Stmt::Empty),
+    "return" <Expr> ";" => Box::new(ast::Stmt::Return(Some(<>))),
+    "print" <Expr> ";" => Box::new(ast::Stmt::Print(ast::PrintStmt::Expr(<>))),
+    <DeclAssignment> ";" => Box::new(ast::Stmt::VarDef(<>)),
+    <StatAssignment> ";" => Box::new(ast::Stmt::Assign(<>)),
+    <FunctionCall> ";" => Box::new(ast::Stmt::Call(<>)),
+    Block => Box::new(ast::Stmt::Block(<>)),
+};
+
+
+ReturnStatement: Option<ast::Expr> = {
+    "return" <assignments: Assignment> => Some(assignments),
+};
+
+PrintStmt: ast::PrintStmt = {
+    "print" "(" <Expr> ")" => ast::PrintStmt::Expr(<>),
+    // "print" "(" "string_literal" ")" => ast::PrintStmt::String(<>),
+};
+
+DeclAssignment: ast::VarDef = {
+    <data_type: Type> <ident: "ident"> "=" <init_expr: Expr> => {
+
+        let init = Some(init_expr);
+
+        ast::VarDef {
+            data_type,
+            res_ident: ast::ResIdent::new(ast::Ident(ident)),
+            init,
+        }
+    }
+};
+
+Type: ast::DataType = {
+    "bool" => ast::DataType::Bool,
+    "float" => ast::DataType::Float,
+    "int" => ast::DataType::Int,
+    "void" => ast::DataType::Void,
+};
+
+StatAssignment: ast::Assign = {
+    <lhs_ident: "ident"> "=" <rhs: Expr> => ast::Assign {
+        lhs: ast::ResIdent::new(ast::Ident(lhs_ident)),
+        rhs: Box::new(rhs),
+    }
+};
+
+Assignment: ast::Expr = {
+    <lhs_ident: "ident"> "=" <rhs: Expr> => ast::Expr::Assign(ast::Assign {
+        lhs: ast::ResIdent::new(ast::Ident(lhs_ident)),
+        rhs: Box::new(rhs),
+    }),
+    Expr => <>,
+};
+
+Expr: ast::Expr = {
+    <lhs: SimpleExpr> <ops: (<EqOp> <SimpleExpr>)*> => {
+        for (op, rhs) in &ops {
+            return ast::Expr::BinaryOp(ast::BinOpExpr {
+                op: *op,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs.clone()),
+            })
+        } 
+        return lhs
+    }
+};
+
+EqOp: ast::BinOp = {
+    "==" => ast::BinOp::Eq,
+    "!=" => ast::BinOp::Neq,
+    "<=" => ast::BinOp::Leq,
+    ">=" => ast::BinOp::Geq,
+    "<" => ast::BinOp::Lt,
+    ">" => ast::BinOp::Gt,
+};
+
+SimpleExpr: ast::Expr = {
+    <mut expr: Term> <ops: (<AddOp> <Term>)*> => {
+        for (op, term) in ops {
+            expr = ast::Expr::BinaryOp(ast::BinOpExpr {
+                op,
+                lhs: Box::new(expr),
+                rhs: Box::new(term),
+            });
+        }
+        expr
+    }
+};
+
+AddOp: ast::BinOp = {
+    "+" => ast::BinOp::Add,
+    "-" => ast::BinOp::Sub,
+    "||" => ast::BinOp::LogOr,
+};
+
+Term: ast::Expr = {
+    <fac: Factor> <ops: (<MulOp> <Factor>)*> => {
+        let mut expr = fac;
+        for (op, factor) in &ops {
+            expr = ast::Expr::BinaryOp(ast::BinOpExpr {
+                op: *op,
+                lhs: Box::new(expr),
+                rhs: Box::new(factor.clone()),
+            });
+        }
+        expr
+    }
+};
+
+MulOp: ast::BinOp = {
+    "*" => ast::BinOp::Mul,
+    "/" => ast::BinOp::Div,
+    "&&" => ast::BinOp::LogAnd,
+};
+
+Factor: ast::Expr = {
+    "-" <Factor> => ast::Expr::UnaryMinus(Box::new(<>)),
+    "int_literal" => ast::Expr::Literal(ast::Literal::Int(<>)),
+    "float_literal" => ast::Expr::Literal(ast::Literal::Float(<>)),
+    "bool_literal" => ast::Expr::Literal(ast::Literal::Bool(<>)),
+    "ident" => ast::Expr::Var(ast::ResIdent::new(ast::Ident(<>))),
+    FunctionCall => ast::Expr::Call(<>),
+    "(" <Assignment> ")" => <>,
+};
+
+FunctionCall: ast::FuncCall = {
+    <ident: Identifier> "(" <mut args:(<Assignment> ",")*> <e:Assignment?> ")" => {
+        if let Some(a) = e {
+            args.push(a);
+        }
+
+        let res_ident = ast::ResIdent::new(ident);
+
+        ast::FuncCall {
+            res_ident, 
+            args,
+        }
+    }
+};
+
+Block: ast::Block = {
+    "{" <statements: StatementList> "}" => ast::Block{statements}
+
+};
+
+Identifier: ast::Ident = {
+    "ident" => ast::Ident(<>),
+};
