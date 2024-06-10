@@ -1,0 +1,71 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = For((ForStmt) {
+                    .init = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 1
+                        },
+                        .init = Literal(int, Int(0))
+                    }),
+                    .cond = BinaryOp(bool, (BinOpExpr) {
+                        .op = Leq,
+                        .lhs = Var(int, (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 1
+                        }),
+                        .rhs = Literal(int, Int(3))
+                    }),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 1
+                        },
+                        .rhs = BinaryOp(int, (BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var(int, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 1
+                            }),
+                            .rhs = Literal(int, Int(1))
+                        })
+                    },
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = Print(Expr(Var(int, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 1
+                            })))
+                        ]
+                    })
+                })
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 1,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                })
+            ]
+        }),
+        [1] = LocalVar("a", (SymVar) {
+            .data_type = int,
+            .index = 0
+        })
+    ]
+}

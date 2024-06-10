@@ -1,0 +1,221 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = int,
+            .ident = "blub",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "blub1"
+                    },
+                    .init = Literal(Int(23))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "blub2"
+                    },
+                    .init = Literal(Int(17))
+                }),
+                [2] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "blub3"
+                    },
+                    .init = Literal(Int(42))
+                }),
+                [3] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "blub4"
+                    },
+                    .init = BinaryOp((BinOpExpr) {
+                        .op = Mul,
+                        .lhs = Var((ResIdent) {
+                            .ident = "blub1"
+                        }),
+                        .rhs = BinaryOp((BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var((ResIdent) {
+                                .ident = "blub2"
+                            }),
+                            .rhs = Var((ResIdent) {
+                                .ident = "blub3"
+                            })
+                        })
+                    })
+                }),
+                [4] = If((IfStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "blub1"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "blub4"
+                        })
+                    }),
+                    .if_true = Return(Var((ResIdent) {
+                        .ident = "blub2"
+                    })),
+                    .if_false = Empty()
+                }),
+                [5] = Return(Var((ResIdent) {
+                    .ident = "blub3"
+                }))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "blah",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .init = Literal(Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b"
+                    },
+                    .init = Literal(Int(2))
+                }),
+                [2] = If((IfStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Call((FuncCall) {
+                            .res_ident = (ResIdent) {
+                                .ident = "blub"
+                            },
+                            .args = []
+                        })
+                    }),
+                    .if_true = Block((Block) {
+                        .statements = [
+                            [0] = If((IfStmt) {
+                                .cond = BinaryOp((BinOpExpr) {
+                                    .op = Gt,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "b"
+                                    }),
+                                    .rhs = Call((FuncCall) {
+                                        .res_ident = (ResIdent) {
+                                            .ident = "blub"
+                                        },
+                                        .args = []
+                                    })
+                                }),
+                                .if_true = Block((Block) {
+                                    .statements = [
+                                        [0] = Print(Expr(BinaryOp((BinOpExpr) {
+                                            .op = Add,
+                                            .lhs = Call((FuncCall) {
+                                                .res_ident = (ResIdent) {
+                                                    .ident = "blub"
+                                                },
+                                                .args = []
+                                            }),
+                                            .rhs = Call((FuncCall) {
+                                                .res_ident = (ResIdent) {
+                                                    .ident = "blub"
+                                                },
+                                                .args = []
+                                            })
+                                        })))
+                                    ]
+                                }),
+                                .if_false = Empty()
+                            })
+                        ]
+                    }),
+                    .if_false = Empty()
+                }),
+                [3] = Return(Literal(Float(3.14159)))
+            ]
+        }),
+        [2] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .init = Literal(Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b"
+                    },
+                    .init = Literal(Int(2))
+                }),
+                [2] = If((IfStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Leq,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    }),
+                    .if_true = Print(Expr(BinaryOp((BinOpExpr) {
+                        .op = Add,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    }))),
+                    .if_false = Empty()
+                }),
+                [3] = If((IfStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Geq,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    }),
+                    .if_true = Print(Expr(BinaryOp((BinOpExpr) {
+                        .op = Sub,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    }))),
+                    .if_false = Empty()
+                }),
+                [4] = Print(Expr(Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "blub"
+                    },
+                    .args = []
+                }))),
+                [5] = Print(Expr(Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "blah"
+                    },
+                    .args = []
+                })))
+            ]
+        })
+    ]
+}

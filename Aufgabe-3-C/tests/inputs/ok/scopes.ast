@@ -1,0 +1,79 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = bool,
+                    .res_ident = (ResIdent) {
+                        .ident = "main"
+                    },
+                    .init = None()
+                }),
+                [1] = Block((Block) {
+                    .statements = [
+                        [0] = VarDef((VarDef) {
+                            .data_type = bool,
+                            .res_ident = (ResIdent) {
+                                .ident = "main"
+                            },
+                            .init = None()
+                        })
+                    ]
+                }),
+                [2] = For((ForStmt) {
+                    .init = VarDef((VarDef) {
+                        .data_type = bool,
+                        .res_ident = (ResIdent) {
+                            .ident = "main"
+                        },
+                        .init = None()
+                    }),
+                    .cond = Literal(Bool(false)),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "main"
+                        },
+                        .rhs = Literal(Bool(false))
+                    },
+                    .body = Empty()
+                }),
+                [3] = For((ForStmt) {
+                    .init = Assign((Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "main"
+                        },
+                        .rhs = Literal(Bool(false))
+                    }),
+                    .cond = Literal(Bool(false)),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "main"
+                        },
+                        .rhs = Literal(Bool(false))
+                    },
+                    .body = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "main"
+                        },
+                        .init = None()
+                    })
+                })
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "bar",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "main"
+                }
+            ],
+            .statements = []
+        })
+    ]
+}

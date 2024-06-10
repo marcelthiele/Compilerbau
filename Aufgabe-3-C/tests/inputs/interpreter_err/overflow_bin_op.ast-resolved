@@ -1,0 +1,43 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "x",
+                        .res = (DefId) 1
+                    },
+                    .init = BinaryOp(int, (BinOpExpr) {
+                        .op = Add,
+                        .lhs = Literal(int, Int(2147483647)),
+                        .rhs = Literal(int, Int(1))
+                    })
+                })
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 1,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("x", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                })
+            ]
+        }),
+        [1] = LocalVar("x", (SymVar) {
+            .data_type = int,
+            .index = 0
+        })
+    ]
+}

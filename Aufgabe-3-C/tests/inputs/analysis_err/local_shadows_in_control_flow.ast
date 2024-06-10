@@ -1,0 +1,34 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "foo",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "x"
+                    },
+                    .init = None()
+                }),
+                [1] = While((WhileStmt) {
+                    .cond = Literal(Bool(false)),
+                    .body = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "x"
+                        },
+                        .init = None()
+                    })
+                })
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = []
+        })
+    ]
+}

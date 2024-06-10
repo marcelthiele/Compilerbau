@@ -1,0 +1,71 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "pos_inf"
+                    },
+                    .init = BinaryOp((BinOpExpr) {
+                        .op = Div,
+                        .lhs = Literal(Float(1)),
+                        .rhs = Literal(Int(0))
+                    })
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "neg_inf"
+                    },
+                    .init = BinaryOp((BinOpExpr) {
+                        .op = Div,
+                        .lhs = UnaryMinus(Literal(Float(1))),
+                        .rhs = Literal(Int(0))
+                    })
+                }),
+                [2] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "nan"
+                    },
+                    .init = BinaryOp((BinOpExpr) {
+                        .op = Div,
+                        .lhs = Literal(Float(0)),
+                        .rhs = Literal(Int(0))
+                    })
+                }),
+                [3] = Print(Expr(Var((ResIdent) {
+                    .ident = "pos_inf"
+                }))),
+                [4] = Print(Expr(Var((ResIdent) {
+                    .ident = "neg_inf"
+                }))),
+                [5] = Print(Expr(Var((ResIdent) {
+                    .ident = "nan"
+                }))),
+                [6] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Eq,
+                    .lhs = Var((ResIdent) {
+                        .ident = "nan"
+                    }),
+                    .rhs = Var((ResIdent) {
+                        .ident = "nan"
+                    })
+                }))),
+                [7] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Neq,
+                    .lhs = Var((ResIdent) {
+                        .ident = "nan"
+                    }),
+                    .rhs = Var((ResIdent) {
+                        .ident = "nan"
+                    })
+                })))
+            ]
+        })
+    ]
+}

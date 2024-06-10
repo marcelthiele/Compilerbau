@@ -1,0 +1,29 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "get",
+            .params = [],
+            .statements = [
+                [0] = Return(Literal(Int(1)))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Div,
+                    .lhs = Call((FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "get"
+                        },
+                        .args = []
+                    }),
+                    .rhs = Literal(Int(2))
+                })))
+            ]
+        })
+    ]
+}

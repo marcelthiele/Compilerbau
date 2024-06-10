@@ -1,0 +1,28 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Block((Block) {
+                    .statements = [
+                        [0] = VarDef((VarDef) {
+                            .data_type = int,
+                            .res_ident = (ResIdent) {
+                                .ident = "answer"
+                            },
+                            .init = None()
+                        })
+                    ]
+                }),
+                [1] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "answer"
+                    },
+                    .rhs = Literal(Int(42))
+                })
+            ]
+        })
+    ]
+}

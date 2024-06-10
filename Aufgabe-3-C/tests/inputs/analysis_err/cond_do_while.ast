@@ -1,0 +1,15 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = DoWhile((WhileStmt) {
+                    .cond = Literal(Int(0)),
+                    .body = Empty()
+                })
+            ]
+        })
+    ]
+}

@@ -1,0 +1,47 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = int,
+            .res_ident = (ResIdent) {
+                .ident = "a"
+            },
+            .init = Literal(Int(1))
+        }),
+        [1] = GlobalVar((VarDef) {
+            .data_type = float,
+            .res_ident = (ResIdent) {
+                .ident = "b"
+            },
+            .init = Literal(Float(2.2))
+        }),
+        [2] = GlobalVar((VarDef) {
+            .data_type = int,
+            .res_ident = (ResIdent) {
+                .ident = "c"
+            },
+            .init = Literal(Int(5))
+        }),
+        [3] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Add,
+                    .lhs = Var((ResIdent) {
+                        .ident = "a"
+                    }),
+                    .rhs = BinaryOp((BinOpExpr) {
+                        .op = Div,
+                        .lhs = Var((ResIdent) {
+                            .ident = "b"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "c"
+                        })
+                    })
+                })))
+            ]
+        })
+    ]
+}

@@ -1,0 +1,25 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = int,
+            .ident = "answer",
+            .params = [],
+            .statements = [
+                [0] = Return(Literal(Int(42)))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "answer"
+                    },
+                    .args = []
+                })
+            ]
+        })
+    ]
+}

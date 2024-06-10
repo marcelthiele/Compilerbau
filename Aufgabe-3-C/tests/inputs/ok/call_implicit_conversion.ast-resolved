@@ -1,0 +1,67 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "call_me",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = float,
+                    .ident = "f"
+                }
+            ],
+            .statements = [
+                [0] = Print(Expr(BinaryOp(float, (BinOpExpr) {
+                    .op = Div,
+                    .lhs = Var(float, (ResIdent) {
+                        .ident = "f",
+                        .res = (DefId) 1
+                    }),
+                    .rhs = Literal(int, Int(2))
+                })))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "call_me",
+                        .res = (DefId) 0
+                    },
+                    .args = [
+                        [0] = Literal(int, Int(41))
+                    ]
+                })
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("call_me", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 1,
+            .param_count = 1,
+            .local_vars = [
+                [0] = LocalVar("f", (SymVar) {
+                    .data_type = float,
+                    .index = 0
+                })
+            ]
+        }),
+        [1] = LocalVar("f", (SymVar) {
+            .data_type = float,
+            .index = 0
+        }),
+        [2] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 1,
+            .return_type = void,
+            .stack_size = 0,
+            .param_count = 0,
+            .local_vars = []
+        })
+    ]
+}

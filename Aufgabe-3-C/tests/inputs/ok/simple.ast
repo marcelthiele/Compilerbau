@@ -1,0 +1,46 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = For((ForStmt) {
+                    .init = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "a"
+                        },
+                        .init = Literal(Int(0))
+                    }),
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Leq,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Literal(Int(3))
+                    }),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "a"
+                        },
+                        .rhs = BinaryOp((BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var((ResIdent) {
+                                .ident = "a"
+                            }),
+                            .rhs = Literal(Int(1))
+                        })
+                    },
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = Print(Expr(Var((ResIdent) {
+                                .ident = "a"
+                            })))
+                        ]
+                    })
+                })
+            ]
+        })
+    ]
+}

@@ -1,0 +1,31 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp(int, (BinOpExpr) {
+                    .op = Div,
+                    .lhs = UnaryMinus(int, BinaryOp(int, (BinOpExpr) {
+                        .op = Sub,
+                        .lhs = UnaryMinus(int, Literal(int, Int(2147483647))),
+                        .rhs = Literal(int, Int(1))
+                    })),
+                    .rhs = Literal(int, Int(2))
+                })))
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 0,
+            .param_count = 0,
+            .local_vars = []
+        })
+    ]
+}

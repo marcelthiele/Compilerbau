@@ -1,0 +1,122 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "test",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "a"
+                },
+                [1] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = Return(BinaryOp(int, (BinOpExpr) {
+                    .op = Add,
+                    .lhs = Var(int, (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 1
+                    }),
+                    .rhs = Var(int, (ResIdent) {
+                        .ident = "b",
+                        .res = (DefId) 2
+                    })
+                }))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 4
+                    },
+                    .init = Literal(int, Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b",
+                        .res = (DefId) 5
+                    },
+                    .init = Literal(int, Int(2))
+                }),
+                [2] = Print(Expr(Call(float, (FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "test",
+                        .res = (DefId) 0
+                    },
+                    .args = [
+                        [0] = Var(int, (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 4
+                        }),
+                        [1] = Var(int, (ResIdent) {
+                            .ident = "b",
+                            .res = (DefId) 5
+                        })
+                    ]
+                })))
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("test", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = float,
+            .stack_size = 2,
+            .param_count = 2,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = int,
+                    .index = 1
+                })
+            ]
+        }),
+        [1] = LocalVar("a", (SymVar) {
+            .data_type = int,
+            .index = 0
+        }),
+        [2] = LocalVar("b", (SymVar) {
+            .data_type = int,
+            .index = 1
+        }),
+        [3] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 1,
+            .return_type = void,
+            .stack_size = 2,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = int,
+                    .index = 1
+                })
+            ]
+        }),
+        [4] = LocalVar("a", (SymVar) {
+            .data_type = int,
+            .index = 0
+        }),
+        [5] = LocalVar("b", (SymVar) {
+            .data_type = int,
+            .index = 1
+        })
+    ]
+}

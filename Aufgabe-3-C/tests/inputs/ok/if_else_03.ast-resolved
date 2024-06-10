@@ -1,0 +1,39 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = If((IfStmt) {
+                    .cond = Literal(bool, Bool(true)),
+                    .if_true = Block((Block) {
+                        .statements = [
+                            [0] = If((IfStmt) {
+                                .cond = Literal(bool, Bool(true)),
+                                .if_true = Block((Block) {
+                                    .statements = [
+                                        [0] = Print(String("then then"))
+                                    ]
+                                }),
+                                .if_false = Empty()
+                            })
+                        ]
+                    }),
+                    .if_false = Empty()
+                })
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 0,
+            .param_count = 0,
+            .local_vars = []
+        })
+    ]
+}

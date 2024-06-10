@@ -1,0 +1,117 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "pos_inf",
+                        .res = (DefId) 1
+                    },
+                    .init = BinaryOp(float, (BinOpExpr) {
+                        .op = Div,
+                        .lhs = Literal(float, Float(1)),
+                        .rhs = Literal(int, Int(0))
+                    })
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "neg_inf",
+                        .res = (DefId) 2
+                    },
+                    .init = BinaryOp(float, (BinOpExpr) {
+                        .op = Div,
+                        .lhs = UnaryMinus(float, Literal(float, Float(1))),
+                        .rhs = Literal(int, Int(0))
+                    })
+                }),
+                [2] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "nan",
+                        .res = (DefId) 3
+                    },
+                    .init = BinaryOp(float, (BinOpExpr) {
+                        .op = Div,
+                        .lhs = Literal(float, Float(0)),
+                        .rhs = Literal(int, Int(0))
+                    })
+                }),
+                [3] = Print(Expr(Var(float, (ResIdent) {
+                    .ident = "pos_inf",
+                    .res = (DefId) 1
+                }))),
+                [4] = Print(Expr(Var(float, (ResIdent) {
+                    .ident = "neg_inf",
+                    .res = (DefId) 2
+                }))),
+                [5] = Print(Expr(Var(float, (ResIdent) {
+                    .ident = "nan",
+                    .res = (DefId) 3
+                }))),
+                [6] = Print(Expr(BinaryOp(bool, (BinOpExpr) {
+                    .op = Eq,
+                    .lhs = Var(float, (ResIdent) {
+                        .ident = "nan",
+                        .res = (DefId) 3
+                    }),
+                    .rhs = Var(float, (ResIdent) {
+                        .ident = "nan",
+                        .res = (DefId) 3
+                    })
+                }))),
+                [7] = Print(Expr(BinaryOp(bool, (BinOpExpr) {
+                    .op = Neq,
+                    .lhs = Var(float, (ResIdent) {
+                        .ident = "nan",
+                        .res = (DefId) 3
+                    }),
+                    .rhs = Var(float, (ResIdent) {
+                        .ident = "nan",
+                        .res = (DefId) 3
+                    })
+                })))
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 3,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("pos_inf", (SymVar) {
+                    .data_type = float,
+                    .index = 0
+                }),
+                [1] = LocalVar("neg_inf", (SymVar) {
+                    .data_type = float,
+                    .index = 1
+                }),
+                [2] = LocalVar("nan", (SymVar) {
+                    .data_type = float,
+                    .index = 2
+                })
+            ]
+        }),
+        [1] = LocalVar("pos_inf", (SymVar) {
+            .data_type = float,
+            .index = 0
+        }),
+        [2] = LocalVar("neg_inf", (SymVar) {
+            .data_type = float,
+            .index = 1
+        }),
+        [3] = LocalVar("nan", (SymVar) {
+            .data_type = float,
+            .index = 2
+        })
+    ]
+}

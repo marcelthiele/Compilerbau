@@ -1,0 +1,150 @@
+This is a small sample programm for tests in c1
+        ----(c) Dustin Hebecker----
+-----
+Local Variable Int
+Result:
+10
+Expected:
+10
+-----
+-----
+Local Variable Float
+Result:
+54.3
+Expected:
+54.3
+-----
+-----
+Global Variable Int
+Result:
+5001
+Expected:
+5001
+-----
+-----
+Global Variable Float
+Result:
+3.14159
+Expected:
+3.14159
+-----
+-----
+Factorial Function (10!)
+Result:
+3628800
+Expected:
+3628800
+-----
+-----
+Absolute value (-13)
+Result:
+13
+Expected:
+13
+-----
+-----
+(e)
+Result:
+2.71828
+Expected:
+2.71828
+-----
+-----
+(e^PI)
+Result:
+23.1407
+Expected:
+23.1407
+-----
+-----
+(5.43^10)
+Result:
+2.22843e+07
+Expected:
+2.22843e+07
+-----
+-----
+(5.43^5.43)
+Result:
+9768.5
+Expected:
+9771.54
+-----
+-----
+Ln(e)
+Result:
+0.999986
+Expected:
+1
+-----
+-----
+Log(100,base=10)
+Result:
+1.99853
+Expected:
+2
+-----
+-----
+sin(3/2 PI)
+Result:
+-1
+Expected:
+-1
+-----
+-----
+cos(3/2 PI)
+Result:
+4.44089e-16
+Expected:
+0
+-----
+-----
+tan(PI/3)
+Result:
+1.73205
+Expected:
+1.73051
+-----
+-----
+sqrt(25)
+Result:
+4.99838
+Expected:
+5
+-----
+-----
+MaxInt
+Result:
+2147483647
+Expected:
+2147483647
+-----
+-----
+float2Int(54.3)
+Result:
+54
+Expected:
+54
+-----
+-----
+14 Modulo 6
+Result:
+2
+Expected:
+2
+-----
+-----
+(Pseudo) Random int [0,16383]
+Result:
+16166
+Expected:
+16166
+-----
+-----
+Random float [0,1)
+Result:
+0.116638
+Expected:
+0.116638
+-----
+Done :)

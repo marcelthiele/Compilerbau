@@ -1,0 +1,510 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = bool,
+            .ident = "not",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = If((IfStmt) {
+                    .cond = BinaryOp(bool, (BinOpExpr) {
+                        .op = Eq,
+                        .lhs = Var(bool, (ResIdent) {
+                            .ident = "b",
+                            .res = (DefId) 1
+                        }),
+                        .rhs = Literal(bool, Bool(true))
+                    }),
+                    .if_true = Return(Literal(bool, Bool(false))),
+                    .if_false = Return(Literal(bool, Bool(true)))
+                })
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = bool,
+            .ident = "morgan11",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "a"
+                },
+                [1] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = Return(Call(bool, (FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "not",
+                        .res = (DefId) 0
+                    },
+                    .args = [
+                        [0] = BinaryOp(bool, (BinOpExpr) {
+                            .op = LogOr,
+                            .lhs = Var(bool, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 3
+                            }),
+                            .rhs = Var(bool, (ResIdent) {
+                                .ident = "b",
+                                .res = (DefId) 4
+                            })
+                        })
+                    ]
+                }))
+            ]
+        }),
+        [2] = Func((FuncDef) {
+            .return_type = bool,
+            .ident = "morgan12",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "a"
+                },
+                [1] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = Return(BinaryOp(bool, (BinOpExpr) {
+                    .op = LogAnd,
+                    .lhs = Call(bool, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "not",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = Var(bool, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 6
+                            })
+                        ]
+                    }),
+                    .rhs = Call(bool, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "not",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = Var(bool, (ResIdent) {
+                                .ident = "b",
+                                .res = (DefId) 7
+                            })
+                        ]
+                    })
+                }))
+            ]
+        }),
+        [3] = Func((FuncDef) {
+            .return_type = bool,
+            .ident = "morgan21",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "a"
+                },
+                [1] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = Return(Call(bool, (FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "not",
+                        .res = (DefId) 0
+                    },
+                    .args = [
+                        [0] = BinaryOp(bool, (BinOpExpr) {
+                            .op = LogAnd,
+                            .lhs = Var(bool, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 9
+                            }),
+                            .rhs = Var(bool, (ResIdent) {
+                                .ident = "b",
+                                .res = (DefId) 10
+                            })
+                        })
+                    ]
+                }))
+            ]
+        }),
+        [4] = Func((FuncDef) {
+            .return_type = bool,
+            .ident = "morgan22",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "a"
+                },
+                [1] = (FuncParam) {
+                    .data_type = bool,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = Return(BinaryOp(bool, (BinOpExpr) {
+                    .op = LogOr,
+                    .lhs = Call(bool, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "not",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = Var(bool, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 12
+                            })
+                        ]
+                    }),
+                    .rhs = Call(bool, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "not",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = Var(bool, (ResIdent) {
+                                .ident = "b",
+                                .res = (DefId) 13
+                            })
+                        ]
+                    })
+                }))
+            ]
+        }),
+        [5] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = bool,
+                    .res_ident = (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 15
+                    },
+                    .init = Literal(bool, Bool(true))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = bool,
+                    .res_ident = (ResIdent) {
+                        .ident = "b",
+                        .res = (DefId) 16
+                    },
+                    .init = Literal(bool, Bool(true))
+                }),
+                [2] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "i",
+                        .res = (DefId) 17
+                    },
+                    .init = Literal(int, Int(0))
+                }),
+                [3] = Print(String("Testing deMorgans Law")),
+                [4] = DoWhile((WhileStmt) {
+                    .cond = BinaryOp(bool, (BinOpExpr) {
+                        .op = Neq,
+                        .lhs = Var(bool, (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 15
+                        }),
+                        .rhs = Literal(bool, Bool(true))
+                    }),
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = DoWhile((WhileStmt) {
+                                .cond = BinaryOp(bool, (BinOpExpr) {
+                                    .op = Neq,
+                                    .lhs = Var(bool, (ResIdent) {
+                                        .ident = "b",
+                                        .res = (DefId) 16
+                                    }),
+                                    .rhs = Literal(bool, Bool(true))
+                                }),
+                                .body = Block((Block) {
+                                    .statements = [
+                                        [0] = Print(Expr(Var(int, (ResIdent) {
+                                            .ident = "i",
+                                            .res = (DefId) 17
+                                        }))),
+                                        [1] = Print(Expr(Call(bool, (FuncCall) {
+                                            .res_ident = (ResIdent) {
+                                                .ident = "morgan11",
+                                                .res = (DefId) 2
+                                            },
+                                            .args = [
+                                                [0] = Var(bool, (ResIdent) {
+                                                    .ident = "a",
+                                                    .res = (DefId) 15
+                                                }),
+                                                [1] = Var(bool, (ResIdent) {
+                                                    .ident = "b",
+                                                    .res = (DefId) 16
+                                                })
+                                            ]
+                                        }))),
+                                        [2] = Print(Expr(Call(bool, (FuncCall) {
+                                            .res_ident = (ResIdent) {
+                                                .ident = "morgan12",
+                                                .res = (DefId) 5
+                                            },
+                                            .args = [
+                                                [0] = Var(bool, (ResIdent) {
+                                                    .ident = "a",
+                                                    .res = (DefId) 15
+                                                }),
+                                                [1] = Var(bool, (ResIdent) {
+                                                    .ident = "b",
+                                                    .res = (DefId) 16
+                                                })
+                                            ]
+                                        }))),
+                                        [3] = Print(Expr(Call(bool, (FuncCall) {
+                                            .res_ident = (ResIdent) {
+                                                .ident = "morgan21",
+                                                .res = (DefId) 8
+                                            },
+                                            .args = [
+                                                [0] = Var(bool, (ResIdent) {
+                                                    .ident = "a",
+                                                    .res = (DefId) 15
+                                                }),
+                                                [1] = Var(bool, (ResIdent) {
+                                                    .ident = "b",
+                                                    .res = (DefId) 16
+                                                })
+                                            ]
+                                        }))),
+                                        [4] = Print(Expr(Call(bool, (FuncCall) {
+                                            .res_ident = (ResIdent) {
+                                                .ident = "morgan22",
+                                                .res = (DefId) 11
+                                            },
+                                            .args = [
+                                                [0] = Var(bool, (ResIdent) {
+                                                    .ident = "a",
+                                                    .res = (DefId) 15
+                                                }),
+                                                [1] = Var(bool, (ResIdent) {
+                                                    .ident = "b",
+                                                    .res = (DefId) 16
+                                                })
+                                            ]
+                                        }))),
+                                        [5] = Assign((Assign) {
+                                            .lhs = (ResIdent) {
+                                                .ident = "i",
+                                                .res = (DefId) 17
+                                            },
+                                            .rhs = BinaryOp(int, (BinOpExpr) {
+                                                .op = Add,
+                                                .lhs = Var(int, (ResIdent) {
+                                                    .ident = "i",
+                                                    .res = (DefId) 17
+                                                }),
+                                                .rhs = Literal(int, Int(1))
+                                            })
+                                        }),
+                                        [6] = Assign((Assign) {
+                                            .lhs = (ResIdent) {
+                                                .ident = "b",
+                                                .res = (DefId) 16
+                                            },
+                                            .rhs = Call(bool, (FuncCall) {
+                                                .res_ident = (ResIdent) {
+                                                    .ident = "not",
+                                                    .res = (DefId) 0
+                                                },
+                                                .args = [
+                                                    [0] = Var(bool, (ResIdent) {
+                                                        .ident = "b",
+                                                        .res = (DefId) 16
+                                                    })
+                                                ]
+                                            })
+                                        })
+                                    ]
+                                })
+                            }),
+                            [1] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "a",
+                                    .res = (DefId) 15
+                                },
+                                .rhs = Call(bool, (FuncCall) {
+                                    .res_ident = (ResIdent) {
+                                        .ident = "not",
+                                        .res = (DefId) 0
+                                    },
+                                    .args = [
+                                        [0] = Var(bool, (ResIdent) {
+                                            .ident = "a",
+                                            .res = (DefId) 15
+                                        })
+                                    ]
+                                })
+                            })
+                        ]
+                    })
+                })
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("not", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = bool,
+            .stack_size = 1,
+            .param_count = 1,
+            .local_vars = [
+                [0] = LocalVar("b", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                })
+            ]
+        }),
+        [1] = LocalVar("b", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [2] = Func("morgan11", (SymFunc) {
+            .item_id = (ItemId) 1,
+            .return_type = bool,
+            .stack_size = 2,
+            .param_count = 2,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                })
+            ]
+        }),
+        [3] = LocalVar("a", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [4] = LocalVar("b", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [5] = Func("morgan12", (SymFunc) {
+            .item_id = (ItemId) 2,
+            .return_type = bool,
+            .stack_size = 2,
+            .param_count = 2,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                })
+            ]
+        }),
+        [6] = LocalVar("a", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [7] = LocalVar("b", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [8] = Func("morgan21", (SymFunc) {
+            .item_id = (ItemId) 3,
+            .return_type = bool,
+            .stack_size = 2,
+            .param_count = 2,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                })
+            ]
+        }),
+        [9] = LocalVar("a", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [10] = LocalVar("b", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [11] = Func("morgan22", (SymFunc) {
+            .item_id = (ItemId) 4,
+            .return_type = bool,
+            .stack_size = 2,
+            .param_count = 2,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                })
+            ]
+        }),
+        [12] = LocalVar("a", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [13] = LocalVar("b", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [14] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 5,
+            .return_type = void,
+            .stack_size = 3,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                }),
+                [2] = LocalVar("i", (SymVar) {
+                    .data_type = int,
+                    .index = 2
+                })
+            ]
+        }),
+        [15] = LocalVar("a", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [16] = LocalVar("b", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [17] = LocalVar("i", (SymVar) {
+            .data_type = int,
+            .index = 2
+        })
+    ]
+}

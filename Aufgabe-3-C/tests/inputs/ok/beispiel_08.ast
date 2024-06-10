@@ -1,0 +1,262 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = bool,
+            .res_ident = (ResIdent) {
+                .ident = "a"
+            },
+            .init = Literal(Bool(true))
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "test",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "x"
+                },
+                [1] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "y"
+                }
+            ],
+            .statements = [
+                [0] = If((IfStmt) {
+                    .cond = Var((ResIdent) {
+                        .ident = "a"
+                    }),
+                    .if_true = Block((Block) {
+                        .statements = [
+                            [0] = Return(Literal(Int(1)))
+                        ]
+                    }),
+                    .if_false = Empty()
+                }),
+                [1] = If((IfStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Eq,
+                        .lhs = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        .rhs = Literal(Bool(true))
+                    }),
+                    .if_true = Block((Block) {
+                        .statements = [
+                            [0] = Return(Literal(Int(2)))
+                        ]
+                    }),
+                    .if_false = Block((Block) {
+                        .statements = [
+                            [0] = Return(Literal(Int(3)))
+                        ]
+                    })
+                }),
+                [2] = For((ForStmt) {
+                    .init = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "i"
+                        },
+                        .init = Literal(Int(0))
+                    }),
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "i"
+                        }),
+                        .rhs = Literal(Int(5))
+                    }),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "i"
+                        },
+                        .rhs = BinaryOp((BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var((ResIdent) {
+                                .ident = "i"
+                            }),
+                            .rhs = Literal(Int(1))
+                        })
+                    },
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "x"
+                                },
+                                .rhs = BinaryOp((BinOpExpr) {
+                                    .op = Add,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "x"
+                                    }),
+                                    .rhs = Literal(Int(1))
+                                })
+                            })
+                        ]
+                    })
+                }),
+                [3] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "j"
+                    },
+                    .init = Literal(Int(0))
+                }),
+                [4] = For((ForStmt) {
+                    .init = Assign((Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "j"
+                        },
+                        .rhs = Literal(Int(0))
+                    }),
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "j"
+                        }),
+                        .rhs = Literal(Int(7))
+                    }),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "j"
+                        },
+                        .rhs = BinaryOp((BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var((ResIdent) {
+                                .ident = "j"
+                            }),
+                            .rhs = Literal(Int(1))
+                        })
+                    },
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "x"
+                                },
+                                .rhs = BinaryOp((BinOpExpr) {
+                                    .op = Mul,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "x"
+                                    }),
+                                    .rhs = Literal(Int(2))
+                                })
+                            })
+                        ]
+                    })
+                }),
+                [5] = While((WhileStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "j"
+                        }),
+                        .rhs = Literal(Int(10))
+                    }),
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "x"
+                                },
+                                .rhs = BinaryOp((BinOpExpr) {
+                                    .op = Sub,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "x"
+                                    }),
+                                    .rhs = Literal(Int(1))
+                                })
+                            }),
+                            [1] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "j"
+                                },
+                                .rhs = BinaryOp((BinOpExpr) {
+                                    .op = Add,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "j"
+                                    }),
+                                    .rhs = Literal(Int(1))
+                                })
+                            })
+                        ]
+                    })
+                }),
+                [6] = DoWhile((WhileStmt) {
+                    .cond = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "j"
+                        }),
+                        .rhs = Literal(Int(20))
+                    }),
+                    .body = Block((Block) {
+                        .statements = [
+                            [0] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "x"
+                                },
+                                .rhs = BinaryOp((BinOpExpr) {
+                                    .op = Div,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "x"
+                                    }),
+                                    .rhs = Literal(Int(2))
+                                })
+                            }),
+                            [1] = Assign((Assign) {
+                                .lhs = (ResIdent) {
+                                    .ident = "j"
+                                },
+                                .rhs = BinaryOp((BinOpExpr) {
+                                    .op = Add,
+                                    .lhs = Var((ResIdent) {
+                                        .ident = "j"
+                                    }),
+                                    .rhs = Literal(Int(1))
+                                })
+                            })
+                        ]
+                    })
+                }),
+                [7] = Return(Var((ResIdent) {
+                    .ident = "x"
+                }))
+            ]
+        }),
+        [2] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .init = Literal(Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b"
+                    },
+                    .init = Literal(Int(2))
+                }),
+                [2] = Print(Expr(Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "test"
+                    },
+                    .args = [
+                        [0] = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        [1] = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    ]
+                })))
+            ]
+        })
+    ]
+}

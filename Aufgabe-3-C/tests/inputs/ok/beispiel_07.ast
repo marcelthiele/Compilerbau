@@ -1,0 +1,112 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = bool,
+            .res_ident = (ResIdent) {
+                .ident = "a"
+            },
+            .init = Literal(Bool(true))
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "test",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "x"
+                },
+                [1] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "y"
+                }
+            ],
+            .statements = [
+                [0] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .rhs = BinaryOp((BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "x"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "y"
+                        })
+                    })
+                }),
+                [1] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .rhs = BinaryOp((BinOpExpr) {
+                        .op = Gt,
+                        .lhs = Var((ResIdent) {
+                            .ident = "x"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "y"
+                        })
+                    })
+                }),
+                [2] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .rhs = BinaryOp((BinOpExpr) {
+                        .op = Eq,
+                        .lhs = Var((ResIdent) {
+                            .ident = "x"
+                        }),
+                        .rhs = Var((ResIdent) {
+                            .ident = "y"
+                        })
+                    })
+                }),
+                [3] = Return(BinaryOp((BinOpExpr) {
+                    .op = Add,
+                    .lhs = Var((ResIdent) {
+                        .ident = "x"
+                    }),
+                    .rhs = Var((ResIdent) {
+                        .ident = "y"
+                    })
+                }))
+            ]
+        }),
+        [2] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .init = Literal(Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b"
+                    },
+                    .init = Literal(Int(2))
+                }),
+                [2] = Print(Expr(Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "test"
+                    },
+                    .args = [
+                        [0] = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        [1] = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    ]
+                })))
+            ]
+        })
+    ]
+}

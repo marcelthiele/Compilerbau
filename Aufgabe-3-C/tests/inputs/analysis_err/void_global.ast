@@ -1,0 +1,17 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = void,
+            .res_ident = (ResIdent) {
+                .ident = "no"
+            },
+            .init = None()
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = []
+        })
+    ]
+}

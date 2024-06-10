@@ -1,0 +1,11 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = int,
+            .res_ident = (ResIdent) {
+                .ident = "main"
+            },
+            .init = None()
+        })
+    ]
+}

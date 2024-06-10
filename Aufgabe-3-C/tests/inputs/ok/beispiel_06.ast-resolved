@@ -1,0 +1,334 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = bool,
+            .res_ident = (ResIdent) {
+                .ident = "a",
+                .res = (DefId) 0
+            },
+            .init = Literal(bool, Bool(true))
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "test",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "x"
+                },
+                [1] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "y"
+                }
+            ],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 4
+                    },
+                    .init = Literal(int, Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b",
+                        .res = (DefId) 5
+                    },
+                    .init = Literal(int, Int(2))
+                }),
+                [2] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "c",
+                        .res = (DefId) 6
+                    },
+                    .init = Literal(float, Float(3.5))
+                }),
+                [3] = VarDef((VarDef) {
+                    .data_type = float,
+                    .res_ident = (ResIdent) {
+                        .ident = "d",
+                        .res = (DefId) 7
+                    },
+                    .init = Literal(float, Float(4.5))
+                }),
+                [4] = VarDef((VarDef) {
+                    .data_type = bool,
+                    .res_ident = (ResIdent) {
+                        .ident = "e",
+                        .res = (DefId) 8
+                    },
+                    .init = Literal(bool, Bool(true))
+                }),
+                [5] = VarDef((VarDef) {
+                    .data_type = bool,
+                    .res_ident = (ResIdent) {
+                        .ident = "f",
+                        .res = (DefId) 9
+                    },
+                    .init = Literal(bool, Bool(false))
+                }),
+                [6] = Block((Block) {
+                    .statements = [
+                        [0] = VarDef((VarDef) {
+                            .data_type = int,
+                            .res_ident = (ResIdent) {
+                                .ident = "i",
+                                .res = (DefId) 10
+                            },
+                            .init = Literal(int, Int(0))
+                        })
+                    ]
+                }),
+                [7] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "c",
+                        .res = (DefId) 6
+                    },
+                    .rhs = BinaryOp(float, (BinOpExpr) {
+                        .op = Sub,
+                        .lhs = BinaryOp(float, (BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var(int, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 4
+                            }),
+                            .rhs = BinaryOp(float, (BinOpExpr) {
+                                .op = Div,
+                                .lhs = BinaryOp(float, (BinOpExpr) {
+                                    .op = Mul,
+                                    .lhs = Var(int, (ResIdent) {
+                                        .ident = "b",
+                                        .res = (DefId) 5
+                                    }),
+                                    .rhs = Var(float, (ResIdent) {
+                                        .ident = "c",
+                                        .res = (DefId) 6
+                                    })
+                                }),
+                                .rhs = BinaryOp(float, (BinOpExpr) {
+                                    .op = Mul,
+                                    .lhs = Var(float, (ResIdent) {
+                                        .ident = "d",
+                                        .res = (DefId) 7
+                                    }),
+                                    .rhs = Var(int, (ResIdent) {
+                                        .ident = "a",
+                                        .res = (DefId) 4
+                                    })
+                                })
+                            })
+                        }),
+                        .rhs = BinaryOp(float, (BinOpExpr) {
+                            .op = Div,
+                            .lhs = Var(int, (ResIdent) {
+                                .ident = "a",
+                                .res = (DefId) 4
+                            }),
+                            .rhs = Var(float, (ResIdent) {
+                                .ident = "d",
+                                .res = (DefId) 7
+                            })
+                        })
+                    })
+                }),
+                [8] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "c",
+                        .res = (DefId) 6
+                    },
+                    .rhs = Assign(int, (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 4
+                        },
+                        .rhs = Var(int, (ResIdent) {
+                            .ident = "b",
+                            .res = (DefId) 5
+                        })
+                    })
+                }),
+                [9] = Assign((Assign) {
+                    .lhs = (ResIdent) {
+                        .ident = "c",
+                        .res = (DefId) 6
+                    },
+                    .rhs = Assign(float, (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "d",
+                            .res = (DefId) 7
+                        },
+                        .rhs = Var(int, (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 4
+                        })
+                    })
+                }),
+                [10] = Return(BinaryOp(int, (BinOpExpr) {
+                    .op = Add,
+                    .lhs = Var(int, (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 4
+                    }),
+                    .rhs = Var(int, (ResIdent) {
+                        .ident = "b",
+                        .res = (DefId) 5
+                    })
+                }))
+            ]
+        }),
+        [2] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 12
+                    },
+                    .init = Literal(int, Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b",
+                        .res = (DefId) 13
+                    },
+                    .init = Literal(int, Int(2))
+                }),
+                [2] = Print(Expr(Call(float, (FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "test",
+                        .res = (DefId) 1
+                    },
+                    .args = [
+                        [0] = Var(int, (ResIdent) {
+                            .ident = "a",
+                            .res = (DefId) 12
+                        }),
+                        [1] = Var(int, (ResIdent) {
+                            .ident = "b",
+                            .res = (DefId) 13
+                        })
+                    ]
+                })))
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = GlobalVar("a", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [1] = Func("test", (SymFunc) {
+            .item_id = (ItemId) 1,
+            .return_type = float,
+            .stack_size = 9,
+            .param_count = 2,
+            .local_vars = [
+                [0] = LocalVar("x", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                }),
+                [1] = LocalVar("y", (SymVar) {
+                    .data_type = int,
+                    .index = 1
+                }),
+                [2] = LocalVar("a", (SymVar) {
+                    .data_type = int,
+                    .index = 2
+                }),
+                [3] = LocalVar("b", (SymVar) {
+                    .data_type = int,
+                    .index = 3
+                }),
+                [4] = LocalVar("c", (SymVar) {
+                    .data_type = float,
+                    .index = 4
+                }),
+                [5] = LocalVar("d", (SymVar) {
+                    .data_type = float,
+                    .index = 5
+                }),
+                [6] = LocalVar("e", (SymVar) {
+                    .data_type = bool,
+                    .index = 6
+                }),
+                [7] = LocalVar("f", (SymVar) {
+                    .data_type = bool,
+                    .index = 7
+                }),
+                [8] = LocalVar("i", (SymVar) {
+                    .data_type = int,
+                    .index = 8
+                })
+            ]
+        }),
+        [2] = LocalVar("x", (SymVar) {
+            .data_type = int,
+            .index = 0
+        }),
+        [3] = LocalVar("y", (SymVar) {
+            .data_type = int,
+            .index = 1
+        }),
+        [4] = LocalVar("a", (SymVar) {
+            .data_type = int,
+            .index = 2
+        }),
+        [5] = LocalVar("b", (SymVar) {
+            .data_type = int,
+            .index = 3
+        }),
+        [6] = LocalVar("c", (SymVar) {
+            .data_type = float,
+            .index = 4
+        }),
+        [7] = LocalVar("d", (SymVar) {
+            .data_type = float,
+            .index = 5
+        }),
+        [8] = LocalVar("e", (SymVar) {
+            .data_type = bool,
+            .index = 6
+        }),
+        [9] = LocalVar("f", (SymVar) {
+            .data_type = bool,
+            .index = 7
+        }),
+        [10] = LocalVar("i", (SymVar) {
+            .data_type = int,
+            .index = 8
+        }),
+        [11] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 2,
+            .return_type = void,
+            .stack_size = 2,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("a", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                }),
+                [1] = LocalVar("b", (SymVar) {
+                    .data_type = int,
+                    .index = 1
+                })
+            ]
+        }),
+        [12] = LocalVar("a", (SymVar) {
+            .data_type = int,
+            .index = 0
+        }),
+        [13] = LocalVar("b", (SymVar) {
+            .data_type = int,
+            .index = 1
+        })
+    ]
+}

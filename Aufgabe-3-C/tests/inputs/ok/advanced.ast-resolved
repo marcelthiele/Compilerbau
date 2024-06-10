@@ -1,0 +1,153 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = int,
+            .ident = "fibonacci",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "n"
+                }
+            ],
+            .statements = [
+                [0] = If((IfStmt) {
+                    .cond = BinaryOp(bool, (BinOpExpr) {
+                        .op = Leq,
+                        .lhs = Var(int, (ResIdent) {
+                            .ident = "n",
+                            .res = (DefId) 1
+                        }),
+                        .rhs = Literal(int, Int(1))
+                    }),
+                    .if_true = Return(Var(int, (ResIdent) {
+                        .ident = "n",
+                        .res = (DefId) 1
+                    })),
+                    .if_false = Empty()
+                }),
+                [1] = Return(BinaryOp(int, (BinOpExpr) {
+                    .op = Add,
+                    .lhs = Call(int, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "fibonacci",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = BinaryOp(int, (BinOpExpr) {
+                                .op = Sub,
+                                .lhs = Var(int, (ResIdent) {
+                                    .ident = "n",
+                                    .res = (DefId) 1
+                                }),
+                                .rhs = Literal(int, Int(1))
+                            })
+                        ]
+                    }),
+                    .rhs = Call(int, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "fibonacci",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = BinaryOp(int, (BinOpExpr) {
+                                .op = Sub,
+                                .lhs = Var(int, (ResIdent) {
+                                    .ident = "n",
+                                    .res = (DefId) 1
+                                }),
+                                .rhs = Literal(int, Int(2))
+                            })
+                        ]
+                    })
+                }))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = For((ForStmt) {
+                    .init = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "n",
+                            .res = (DefId) 3
+                        },
+                        .init = Literal(int, Int(1))
+                    }),
+                    .cond = BinaryOp(bool, (BinOpExpr) {
+                        .op = Lt,
+                        .lhs = Var(int, (ResIdent) {
+                            .ident = "n",
+                            .res = (DefId) 3
+                        }),
+                        .rhs = Literal(int, Int(30))
+                    }),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "n",
+                            .res = (DefId) 3
+                        },
+                        .rhs = BinaryOp(int, (BinOpExpr) {
+                            .op = Add,
+                            .lhs = Var(int, (ResIdent) {
+                                .ident = "n",
+                                .res = (DefId) 3
+                            }),
+                            .rhs = Literal(int, Int(1))
+                        })
+                    },
+                    .body = Print(Expr(Call(int, (FuncCall) {
+                        .res_ident = (ResIdent) {
+                            .ident = "fibonacci",
+                            .res = (DefId) 0
+                        },
+                        .args = [
+                            [0] = Var(int, (ResIdent) {
+                                .ident = "n",
+                                .res = (DefId) 3
+                            })
+                        ]
+                    })))
+                })
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("fibonacci", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = int,
+            .stack_size = 1,
+            .param_count = 1,
+            .local_vars = [
+                [0] = LocalVar("n", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                })
+            ]
+        }),
+        [1] = LocalVar("n", (SymVar) {
+            .data_type = int,
+            .index = 0
+        }),
+        [2] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 1,
+            .return_type = void,
+            .stack_size = 1,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("n", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                })
+            ]
+        }),
+        [3] = LocalVar("n", (SymVar) {
+            .data_type = int,
+            .index = 0
+        })
+    ]
+}

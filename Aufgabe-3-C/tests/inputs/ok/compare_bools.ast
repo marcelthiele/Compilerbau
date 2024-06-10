@@ -1,0 +1,21 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Neq,
+                    .lhs = Literal(Bool(false)),
+                    .rhs = Literal(Bool(true))
+                }))),
+                [1] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Eq,
+                    .lhs = Literal(Bool(true)),
+                    .rhs = Literal(Bool(false))
+                })))
+            ]
+        })
+    ]
+}

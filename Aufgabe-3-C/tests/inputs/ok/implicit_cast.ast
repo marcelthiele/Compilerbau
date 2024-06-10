@@ -1,0 +1,111 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Lt,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [1] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Lt,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [2] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Gt,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [3] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Gt,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [4] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Leq,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [5] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Leq,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [6] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Geq,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [7] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Geq,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [8] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Eq,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [9] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Eq,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [10] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Neq,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [11] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Neq,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [12] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Add,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [13] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Add,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [14] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Sub,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [15] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Sub,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [16] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Mul,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [17] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Mul,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                }))),
+                [18] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Div,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Float(1.5))
+                }))),
+                [19] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Div,
+                    .lhs = Literal(Float(1.5)),
+                    .rhs = Literal(Int(1))
+                })))
+            ]
+        })
+    ]
+}

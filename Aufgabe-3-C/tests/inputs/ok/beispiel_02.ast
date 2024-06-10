@@ -1,0 +1,63 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = float,
+            .ident = "test",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "a"
+                },
+                [1] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "b"
+                }
+            ],
+            .statements = [
+                [0] = Return(BinaryOp((BinOpExpr) {
+                    .op = Add,
+                    .lhs = Var((ResIdent) {
+                        .ident = "a"
+                    }),
+                    .rhs = Var((ResIdent) {
+                        .ident = "b"
+                    })
+                }))
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "a"
+                    },
+                    .init = Literal(Int(1))
+                }),
+                [1] = VarDef((VarDef) {
+                    .data_type = int,
+                    .res_ident = (ResIdent) {
+                        .ident = "b"
+                    },
+                    .init = Literal(Int(2))
+                }),
+                [2] = Print(Expr(Call((FuncCall) {
+                    .res_ident = (ResIdent) {
+                        .ident = "test"
+                    },
+                    .args = [
+                        [0] = Var((ResIdent) {
+                            .ident = "a"
+                        }),
+                        [1] = Var((ResIdent) {
+                            .ident = "b"
+                        })
+                    ]
+                })))
+            ]
+        })
+    ]
+}

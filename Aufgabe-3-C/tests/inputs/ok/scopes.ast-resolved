@@ -1,0 +1,146 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = VarDef((VarDef) {
+                    .data_type = bool,
+                    .res_ident = (ResIdent) {
+                        .ident = "main",
+                        .res = (DefId) 1
+                    },
+                    .init = None()
+                }),
+                [1] = Block((Block) {
+                    .statements = [
+                        [0] = VarDef((VarDef) {
+                            .data_type = bool,
+                            .res_ident = (ResIdent) {
+                                .ident = "main",
+                                .res = (DefId) 2
+                            },
+                            .init = None()
+                        })
+                    ]
+                }),
+                [2] = For((ForStmt) {
+                    .init = VarDef((VarDef) {
+                        .data_type = bool,
+                        .res_ident = (ResIdent) {
+                            .ident = "main",
+                            .res = (DefId) 3
+                        },
+                        .init = None()
+                    }),
+                    .cond = Literal(bool, Bool(false)),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "main",
+                            .res = (DefId) 3
+                        },
+                        .rhs = Literal(bool, Bool(false))
+                    },
+                    .body = Empty()
+                }),
+                [3] = For((ForStmt) {
+                    .init = Assign((Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "main",
+                            .res = (DefId) 1
+                        },
+                        .rhs = Literal(bool, Bool(false))
+                    }),
+                    .cond = Literal(bool, Bool(false)),
+                    .update = (Assign) {
+                        .lhs = (ResIdent) {
+                            .ident = "main",
+                            .res = (DefId) 1
+                        },
+                        .rhs = Literal(bool, Bool(false))
+                    },
+                    .body = VarDef((VarDef) {
+                        .data_type = int,
+                        .res_ident = (ResIdent) {
+                            .ident = "main",
+                            .res = (DefId) 4
+                        },
+                        .init = None()
+                    })
+                })
+            ]
+        }),
+        [1] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "bar",
+            .params = [
+                [0] = (FuncParam) {
+                    .data_type = int,
+                    .ident = "main"
+                }
+            ],
+            .statements = []
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 0,
+            .return_type = void,
+            .stack_size = 2,
+            .param_count = 0,
+            .local_vars = [
+                [0] = LocalVar("main", (SymVar) {
+                    .data_type = bool,
+                    .index = 0
+                }),
+                [1] = LocalVar("main", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                }),
+                [2] = LocalVar("main", (SymVar) {
+                    .data_type = bool,
+                    .index = 1
+                }),
+                [3] = LocalVar("main", (SymVar) {
+                    .data_type = int,
+                    .index = 1
+                })
+            ]
+        }),
+        [1] = LocalVar("main", (SymVar) {
+            .data_type = bool,
+            .index = 0
+        }),
+        [2] = LocalVar("main", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [3] = LocalVar("main", (SymVar) {
+            .data_type = bool,
+            .index = 1
+        }),
+        [4] = LocalVar("main", (SymVar) {
+            .data_type = int,
+            .index = 1
+        }),
+        [5] = Func("bar", (SymFunc) {
+            .item_id = (ItemId) 1,
+            .return_type = void,
+            .stack_size = 1,
+            .param_count = 1,
+            .local_vars = [
+                [0] = LocalVar("main", (SymVar) {
+                    .data_type = int,
+                    .index = 0
+                })
+            ]
+        }),
+        [6] = LocalVar("main", (SymVar) {
+            .data_type = int,
+            .index = 0
+        })
+    ]
+}

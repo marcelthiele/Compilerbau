@@ -1,0 +1,76 @@
+(Program) {
+    .items = [
+        [0] = GlobalVar((VarDef) {
+            .data_type = int,
+            .res_ident = (ResIdent) {
+                .ident = "a",
+                .res = (DefId) 0
+            },
+            .init = Literal(int, Int(1))
+        }),
+        [1] = GlobalVar((VarDef) {
+            .data_type = float,
+            .res_ident = (ResIdent) {
+                .ident = "b",
+                .res = (DefId) 1
+            },
+            .init = Literal(float, Float(2.2))
+        }),
+        [2] = GlobalVar((VarDef) {
+            .data_type = int,
+            .res_ident = (ResIdent) {
+                .ident = "c",
+                .res = (DefId) 2
+            },
+            .init = Literal(int, Int(5))
+        }),
+        [3] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp(float, (BinOpExpr) {
+                    .op = Add,
+                    .lhs = Var(int, (ResIdent) {
+                        .ident = "a",
+                        .res = (DefId) 0
+                    }),
+                    .rhs = BinaryOp(float, (BinOpExpr) {
+                        .op = Div,
+                        .lhs = Var(float, (ResIdent) {
+                            .ident = "b",
+                            .res = (DefId) 1
+                        }),
+                        .rhs = Var(int, (ResIdent) {
+                            .ident = "c",
+                            .res = (DefId) 2
+                        })
+                    })
+                })))
+            ]
+        })
+    ]
+}
+(Symtab) {
+    .definitions = [
+        [0] = GlobalVar("a", (SymVar) {
+            .data_type = int,
+            .index = 0
+        }),
+        [1] = GlobalVar("b", (SymVar) {
+            .data_type = float,
+            .index = 1
+        }),
+        [2] = GlobalVar("c", (SymVar) {
+            .data_type = int,
+            .index = 2
+        }),
+        [3] = Func("main", (SymFunc) {
+            .item_id = (ItemId) 3,
+            .return_type = void,
+            .stack_size = 0,
+            .param_count = 0,
+            .local_vars = []
+        })
+    ]
+}

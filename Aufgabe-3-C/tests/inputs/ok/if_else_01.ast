@@ -1,0 +1,20 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = If((IfStmt) {
+                    .cond = Literal(Bool(true)),
+                    .if_true = Block((Block) {
+                        .statements = [
+                            [0] = Print(String("then"))
+                        ]
+                    }),
+                    .if_false = Empty()
+                })
+            ]
+        })
+    ]
+}

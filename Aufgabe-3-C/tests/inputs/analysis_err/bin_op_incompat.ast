@@ -1,0 +1,16 @@
+(Program) {
+    .items = [
+        [0] = Func((FuncDef) {
+            .return_type = void,
+            .ident = "main",
+            .params = [],
+            .statements = [
+                [0] = Print(Expr(BinaryOp((BinOpExpr) {
+                    .op = Add,
+                    .lhs = Literal(Int(1)),
+                    .rhs = Literal(Bool(true))
+                })))
+            ]
+        })
+    ]
+}
