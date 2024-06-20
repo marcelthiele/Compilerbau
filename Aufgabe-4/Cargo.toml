@@ -1,0 +1,16 @@
+[package]
+name = "c1"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.77.0"
+
+[dependencies]
+lalrpop-util = { version = "0.20", features = ["lexer"] }
+logos = "0.14"
+
+[build-dependencies]
+lalrpop = "0.20"
+
+[dev-dependencies]
+proptest = "1"
+similar = "2"

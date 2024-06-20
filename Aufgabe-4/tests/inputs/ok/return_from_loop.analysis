@@ -1,0 +1,86 @@
+ProgramInfo {
+    definitions: Definitions {
+        definitions: [
+            GlobalVar(
+                VarInfo {
+                    offset: 0,
+                    data_type: Int,
+                },
+            ),
+            Func(
+                FuncInfo {
+                    item_id: FuncItemId(
+                        ItemId(
+                            1,
+                        ),
+                    ),
+                    return_type: Int,
+                    param_count: 0,
+                    local_vars: [],
+                },
+            ),
+            Func(
+                FuncInfo {
+                    item_id: FuncItemId(
+                        ItemId(
+                            2,
+                        ),
+                    ),
+                    return_type: Int,
+                    param_count: 0,
+                    local_vars: [],
+                },
+            ),
+            Func(
+                FuncInfo {
+                    item_id: FuncItemId(
+                        ItemId(
+                            3,
+                        ),
+                    ),
+                    return_type: Int,
+                    param_count: 0,
+                    local_vars: [],
+                },
+            ),
+            Func(
+                FuncInfo {
+                    item_id: FuncItemId(
+                        ItemId(
+                            4,
+                        ),
+                    ),
+                    return_type: Void,
+                    param_count: 0,
+                    local_vars: [
+                        LocalVarDefId(
+                            DefId(
+                                5,
+                            ),
+                        ),
+                    ],
+                },
+            ),
+            LocalVar(
+                VarInfo {
+                    offset: 0,
+                    data_type: Int,
+                },
+            ),
+        ],
+    },
+    global_vars: [
+        GlobalVarItemId(
+            ItemId(
+                0,
+            ),
+        ),
+    ],
+    main_func: Some(
+        FuncDefId(
+            DefId(
+                4,
+            ),
+        ),
+    ),
+}
