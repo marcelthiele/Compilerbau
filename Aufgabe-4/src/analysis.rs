@@ -110,11 +110,25 @@ pub fn analyze(root: &mut ast::Program) -> Result<ProgramInfo, AnalysisError> {
         let item_id = ast::ItemId(index);
         analyser.visit_item(item_id, item)?;
     }
+    let main_def_id = analyser.tab.resolve("main")?;
+
+    let main_func_info = match &analyser.tab[main_def_id] {
+        DefInfo::Func(func_info) => func_info,
+        _ => return Err(AnalysisError("main is not a function".to_string())),
+    };
+
+    if main_func_info.return_type != ast::DataType::Void {
+        return Err(AnalysisError("main must return void".to_string()));
+    }
+
+    // check num of params
+    if main_func_info.param_count != 0 {
+        return Err(AnalysisError("main must have no parameters".to_string()));
+    }
 
     let mut info = analyser.tab.into_program_info();
 
-    // TODO: "main"-Funktion auflösen und an dieser einsetzen
-    info.main_func = None;
+    info.main_func = Some(FuncDefId(main_def_id));
 
     Ok(info)
 }
@@ -154,6 +168,10 @@ impl Analyzer {
     /// Analyzes a local variable definition (not a function parameter).
     fn visit_local_var_def(&mut self, var_def: &mut ast::VarDef) -> Result<(), AnalysisError> {
         self.visit_var_def(var_def, "local variable")?;
+
+        // define local variable in current scope
+        self.tab.define_local_var(&var_def.res_ident, var_def.data_type)?;
+
         Ok(())
     }
 
@@ -171,6 +189,12 @@ impl Analyzer {
         if let Some(init) = &mut var_def.init {
             let _expr_type = self.visit_expr(init)?;
         }
+
+        // resolve variable name
+        let def_id = self.tab.resolve(&var_def.res_ident)?;
+
+        var_def.res_ident.set_res(def_id);
+
         Ok(())
     }
 
@@ -180,19 +204,43 @@ impl Analyzer {
         _item_id: ast::FuncItemId,
         func_def: &mut ast::FuncDef,
     ) -> Result<(), AnalysisError> {
+        // Define function name for global scope
+        self.tab.define_func(
+            func_def.ident.clone(),
+            func_def.return_type,
+            func_def.params.len(),
+            _item_id,
+        )?;
+
+        // enter new scope
+        self.tab.scope_enter();
+
+        // define parameters in current scope
         for param in &func_def.params {
             self.visit_func_param(param)?;
         }
 
+        // analyze function body
         for stmt in &mut func_def.statements {
             self.visit_stmt(stmt)?;
         }
+
+        // leave scope
+        self.tab.scope_leave();
 
         Ok(())
     }
 
     /// Analyzes a function parameter.
     fn visit_func_param(&mut self, _param: &ast::FuncParam) -> Result<(), AnalysisError> {
+        // return error if parameter is void
+        if _param.data_type == ast::DataType::Void {
+            return Err(AnalysisError("parameter cannot be void".to_string()));
+        }
+
+        // define parameter in current scope
+        self.tab.define_local_var(&_param.ident, _param.data_type)?;
+
         Ok(())
     }
 
@@ -239,16 +287,25 @@ impl Analyzer {
 
     /// Analyzes a `for` statement.
     fn visit_for_stmt(&mut self, stmt: &mut ast::ForStmt) -> Result<(), AnalysisError> {
-        match &mut stmt.init {
-            ast::ForInit::VarDef(var_def) => self.visit_local_var_def(var_def)?,
-            ast::ForInit::Assign(assign) => {
-                let _expr_type = self.visit_assign(assign)?;
+        // enter for scope
+        self.tab.scope_enter();
+        let _init_type = match &mut stmt.init {
+            ast::ForInit::VarDef(var_def) => {
+                self.visit_local_var_def(var_def)?;
+                var_def.data_type
             }
-        }
+            ast::ForInit::Assign(assign) => self.visit_assign(assign)?,
+        };
 
         self.visit_cond_expr(&mut stmt.cond, "for loop")?;
         let _expr_type = self.visit_assign(&mut stmt.update)?;
         self.visit_stmt(&mut stmt.body)?;
+
+        // check if _expr_type is the same as _init_type
+        equal_types(_expr_type, _init_type)?;
+
+        // leave for scope
+        self.tab.scope_leave();
         Ok(())
     }
 
@@ -278,8 +335,14 @@ impl Analyzer {
             ast::PrintStmt::String(_) => Ok(()),
             ast::PrintStmt::Expr(expr) => {
                 let _expr_type = self.visit_expr(expr)?;
+
+                // check if _expr_type is void -> error
+                if _expr_type == ast::DataType::Void {
+                    return Err(AnalysisError("cannot print void".to_string()));
+                }
+
                 Ok(())
-            }
+            },
         }
     }
 
@@ -290,15 +353,55 @@ impl Analyzer {
         }
 
         // TODO: Datentyp berechnen und anpassen
-        Ok(ast::DataType::Void)
+
+        // resolve function name
+        let def_id = self.tab.resolve( &call.res_ident)?;
+
+        call.res_ident.set_res(def_id);
+
+        match &self.tab[def_id] {
+            DefInfo::Func(func_info) => {
+                // check number of params
+                if call.args.len() != func_info.param_count {
+                    return Err(AnalysisError("wrong number of arguments".to_string()));
+                }
+                // check if types of params are correct
+                let return_type = func_info.return_type.clone();
+                for (arg, expr) in &mut call.args.iter_mut().zip(func_info.local_vars.clone()) {
+                    let arg_type = self.visit_expr(arg)?;
+                    let param_type = self.tab[expr].data_type;
+                    equal_types(arg_type, param_type)?;
+                }
+                // return return type of function
+                Ok(return_type.clone())
+            },
+            _ => Err(AnalysisError("not a function".to_string())),
+        }
+
     }
 
     /// Analyzes an assignment statement or expression and returns its type.
     fn visit_assign(&mut self, assign: &mut ast::Assign) -> Result<ast::DataType, AnalysisError> {
         let _rhs_type = self.visit_expr(&mut assign.rhs)?;
 
-        // TODO: Datentyp berechnen und anpassen
-        Ok(ast::DataType::Void)
+        let _def_id = self.tab.resolve(&mut assign.lhs)?;
+
+        // set resident of lhs to def_id
+        assign.lhs.set_res(_def_id);
+
+        let _lhs_type = match &self.tab[_def_id] {
+            DefInfo::LocalVar(var_info) => var_info.data_type,
+            DefInfo::GlobalVar(var_info) => var_info.data_type,
+            _ => return Err(AnalysisError("lhs is not a variable".to_string())),
+        };
+
+        // check if _lhs_type is the same as _rhs_type (or if _rhs_type can be converted to _lhs_type (int -> float))
+        if(_lhs_type != _rhs_type 
+            && !((_lhs_type == ast::DataType::Int && _rhs_type == ast::DataType::Float))){
+            return Err(AnalysisError("lhs and rhs have different types".to_string()));
+        }
+
+        Ok(_lhs_type)
     }
 
     /// Analyzes the condition expression of a control flow statement, expecting
@@ -307,6 +410,9 @@ impl Analyzer {
     /// The `kind` parameter describes the statement for diagnostics.
     fn visit_cond_expr(&mut self, expr: &mut ast::Expr, _kind: &str) -> Result<(), AnalysisError> {
         let _cond_type = self.visit_expr(expr)?;
+
+        // check if _cond_type is boolean
+        equal_types(_cond_type, ast::DataType::Bool)?;
         Ok(())
     }
 
@@ -351,7 +457,26 @@ impl Analyzer {
         _res_ident: &mut ast::ResIdent,
     ) -> Result<ast::DataType, AnalysisError> {
         // TODO: Datentyp berechnen und anpassen
+
+        let _def_id = self.tab.resolve(_res_ident)?;
+
         Ok(ast::DataType::Void)
+    }
+}
+
+/// Compares two types and returns the common type if they are compatible.
+fn equal_types(lhs: ast::DataType, rhs: ast::DataType) -> Result<(ast::DataType), AnalysisError> {
+    if lhs == rhs {
+        return Ok(lhs);
+    } else if ((lhs == ast::DataType::Int && rhs == ast::DataType::Float)
+        || (lhs == ast::DataType::Float && rhs == ast::DataType::Int))
+    {
+        return Ok(ast::DataType::Float);
+    } else {
+        return Err(AnalysisError(format!(
+            "expected type {:?}, found type {:?}",
+            lhs, rhs
+        )));
     }
 }
 
