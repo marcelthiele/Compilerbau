@@ -170,7 +170,8 @@ impl Analyzer {
         self.visit_var_def(var_def, "local variable")?;
 
         // define local variable in current scope
-        self.tab.define_local_var(&var_def.res_ident, var_def.data_type)?;
+        self.tab
+            .define_local_var(&var_def.res_ident, var_def.data_type)?;
 
         Ok(())
     }
@@ -355,7 +356,7 @@ impl Analyzer {
         // TODO: Datentyp berechnen und anpassen
 
         // resolve function name
-        let def_id = self.tab.resolve( &call.res_ident)?;
+        let def_id = self.tab.resolve(&call.res_ident)?;
 
         call.res_ident.set_res(def_id);
 
@@ -377,7 +378,7 @@ impl Analyzer {
             },
             _ => Err(AnalysisError("not a function".to_string())),
         }
-
+        
     }
 
     /// Analyzes an assignment statement or expression and returns its type.
@@ -396,9 +397,12 @@ impl Analyzer {
         };
 
         // check if _lhs_type is the same as _rhs_type (or if _rhs_type can be converted to _lhs_type (int -> float))
-        if(_lhs_type != _rhs_type 
-            && !((_lhs_type == ast::DataType::Int && _rhs_type == ast::DataType::Float))){
-            return Err(AnalysisError("lhs and rhs have different types".to_string()));
+        if (_lhs_type != _rhs_type
+            && !(_lhs_type == ast::DataType::Int && _rhs_type == ast::DataType::Float))
+        {
+            return Err(AnalysisError(
+                "lhs and rhs have different types".to_string(),
+            ));
         }
 
         Ok(_lhs_type)
@@ -437,7 +441,10 @@ impl Analyzer {
         let _rhs_type = self.visit_expr(&mut bin_op_expr.rhs)?;
 
         // TODO: Datentyp berechnen und anpassen
-        Ok(ast::DataType::Void)
+
+        equal_types(_lhs_type, _rhs_type)?;
+
+        Ok(_lhs_type)
     }
 
     /// Analyzes an unary minus expression and returns its type.
@@ -448,7 +455,12 @@ impl Analyzer {
         let _expr_type = self.visit_expr(inner_expr)?;
 
         // TODO: Datentyp berechnen und anpassen
-        Ok(ast::DataType::Void)
+
+        if(_expr_type != ast::DataType::Int && _expr_type != ast::DataType::Float) {
+            return Err(AnalysisError("expected type int or float".to_string()));
+        }
+
+        Ok(_expr_type)
     }
 
     /// Analyzes a variable expression and returns its type.
@@ -460,7 +472,13 @@ impl Analyzer {
 
         let _def_id = self.tab.resolve(_res_ident)?;
 
-        Ok(ast::DataType::Void)
+        _res_ident.set_res(_def_id);
+
+        match &self.tab[_def_id] {
+            DefInfo::LocalVar(var_info) => Ok(var_info.data_type),
+            DefInfo::GlobalVar(var_info) => Ok(var_info.data_type),
+            _ => Err(AnalysisError("not a variable".to_string())),
+        }
     }
 }
 
