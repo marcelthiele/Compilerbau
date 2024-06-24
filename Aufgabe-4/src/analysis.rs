@@ -112,11 +112,13 @@ pub fn analyze(root: &mut ast::Program) -> Result<ProgramInfo, AnalysisError> {
     }
     let main_def_id = analyser.tab.resolve("main")?;
 
+    // check if main is a function
     let main_func_info = match &analyser.tab[main_def_id] {
         DefInfo::Func(func_info) => func_info,
         _ => return Err(AnalysisError("main is not a function".to_string())),
     };
 
+    // check return type
     if main_func_info.return_type != ast::DataType::Void {
         return Err(AnalysisError("main must return void".to_string()));
     }
@@ -162,7 +164,16 @@ impl Analyzer {
         var_def: &mut ast::VarDef,
     ) -> Result<(), AnalysisError> {
         self.visit_var_def(var_def, "global variable")?;
-        Ok(())
+
+        // define global variable in global scope
+        let def_id = self.tab
+            .define_global_var(&var_def.res_ident, var_def.data_type, _item_id)?;
+
+        // set resident of var_def.res_ident to def_id
+        var_def.res_ident.set_res(def_id);
+        
+
+        Ok::<(), AnalysisError>(())
     }
 
     /// Analyzes a local variable definition (not a function parameter).
@@ -170,8 +181,11 @@ impl Analyzer {
         self.visit_var_def(var_def, "local variable")?;
 
         // define local variable in current scope
-        self.tab
+        let def_id = self.tab
             .define_local_var(&var_def.res_ident, var_def.data_type)?;
+
+        // set resident (resolve identifier) of var_def.res_ident to def_id, so that it can be resolved
+        var_def.res_ident.set_res(def_id);
 
         Ok(())
     }
@@ -189,12 +203,19 @@ impl Analyzer {
     ) -> Result<(), AnalysisError> {
         if let Some(init) = &mut var_def.init {
             let _expr_type = self.visit_expr(init)?;
+
+            // check if _expr_type is the same as data_type of var_def (or if _expr_type can be converted to data_type (int -> float))
+            if (var_def.data_type != _expr_type
+                && !(var_def.data_type == ast::DataType::Float && _expr_type == ast::DataType::Int))
+            {
+                return Err(AnalysisError(format!(
+                    "initialization of {} has wrong type",
+                    _kind
+                )));
+            }
+        }else if var_def.data_type == ast::DataType::Void {
+            return Err(AnalysisError("variable cannot be void".to_string()));
         }
-
-        // resolve variable name
-        let def_id = self.tab.resolve(&var_def.res_ident)?;
-
-        var_def.res_ident.set_res(def_id);
 
         Ok(())
     }
@@ -217,13 +238,13 @@ impl Analyzer {
         self.tab.scope_enter();
 
         // define parameters in current scope
-        for param in &func_def.params {
-            self.visit_func_param(param)?;
+        for parameter in &func_def.params {
+            self.visit_func_param(parameter)?;
         }
 
         // analyze function body
-        for stmt in &mut func_def.statements {
-            self.visit_stmt(stmt)?;
+        for statement in &mut func_def.statements {
+            self.visit_stmt(statement)?;
         }
 
         // leave scope
@@ -270,9 +291,16 @@ impl Analyzer {
 
     /// Analyzes a block statement.
     fn visit_block(&mut self, block: &mut ast::Block) -> Result<(), AnalysisError> {
+        // enter scope
+        self.tab.scope_enter();
+
+        // analyze each statement in block
         for stmt in &mut block.statements {
             self.visit_stmt(stmt)?;
         }
+
+        // leave scope
+        self.tab.scope_leave();
         Ok(())
     }
 
@@ -290,6 +318,8 @@ impl Analyzer {
     fn visit_for_stmt(&mut self, stmt: &mut ast::ForStmt) -> Result<(), AnalysisError> {
         // enter for scope
         self.tab.scope_enter();
+
+        // get type of init (should be the same as type of update)
         let _init_type = match &mut stmt.init {
             ast::ForInit::VarDef(var_def) => {
                 self.visit_local_var_def(var_def)?;
@@ -298,12 +328,18 @@ impl Analyzer {
             ast::ForInit::Assign(assign) => self.visit_assign(assign)?,
         };
 
-        self.visit_cond_expr(&mut stmt.cond, "for loop")?;
-        let _expr_type = self.visit_assign(&mut stmt.update)?;
-        self.visit_stmt(&mut stmt.body)?;
+        let _update_type = self.visit_assign(&mut stmt.update)?;
+        // check if _update_type is the same as _init_type (or if _update_type can be converted to _init_type (int -> float)
+        if (_init_type != _update_type
+            && !(_init_type == ast::DataType::Int && _update_type == ast::DataType::Float))
+        {
+            return Err(AnalysisError("init and update in for loop have different types".to_string()));
+        }
 
-        // check if _expr_type is the same as _init_type
-        equal_types(_expr_type, _init_type)?;
+        self.visit_cond_expr(&mut stmt.cond, "for loop")?;
+        
+        // analyze body of for loop
+        self.visit_stmt(&mut stmt.body)?;
 
         // leave for scope
         self.tab.scope_leave();
@@ -319,13 +355,37 @@ impl Analyzer {
         kind: &str,
     ) -> Result<(), AnalysisError> {
         self.visit_cond_expr(&mut stmt.cond, kind)?;
-        self.visit_stmt(&mut stmt.body)
+        return self.visit_stmt(&mut stmt.body);
     }
 
     /// Analyzes a `return` statement.
     fn visit_return_stmt(&mut self, expr: &mut Option<ast::Expr>) -> Result<(), AnalysisError> {
         if let Some(expr) = expr {
             let _expr_type = self.visit_expr(expr)?;
+
+            if let Some(func_info) = self.tab.current_func() {
+                let return_type = func_info.return_type.clone();
+
+                // check if _expr_type is the same as return_type of function (or if _expr_type can be converted to return_type (int -> float))
+                if (func_info.return_type != _expr_type
+                    && !(func_info.return_type == ast::DataType::Float && _expr_type == ast::DataType::Int))
+                {
+                    return Err(AnalysisError("return type does not match function return type".to_string()));
+                }
+
+                if return_type == ast::DataType::Void {
+                    return Err(AnalysisError("cannot return value from void function".to_string()));
+                }
+
+                return Ok(());
+            }
+        }
+
+        // if no expr -> check if return type of function is void
+        if let Some(func_info) = self.tab.current_func() {
+            if func_info.return_type != ast::DataType::Void {
+                return Err(AnalysisError("return type does not match function return type".to_string()));
+            }
         }
         Ok(())
     }
@@ -352,8 +412,6 @@ impl Analyzer {
         for expr in &mut call.args {
             let _expr_type = self.visit_expr(expr)?;
         }
-
-        // TODO: Datentyp berechnen und anpassen
 
         // resolve function name
         let def_id = self.tab.resolve(&call.res_ident)?;
@@ -391,14 +449,14 @@ impl Analyzer {
         assign.lhs.set_res(_def_id);
 
         let _lhs_type = match &self.tab[_def_id] {
-            DefInfo::LocalVar(var_info) => var_info.data_type,
-            DefInfo::GlobalVar(var_info) => var_info.data_type,
+            DefInfo::LocalVar(var_info) => Ok::<_, AnalysisError>(var_info.data_type),
+            DefInfo::GlobalVar(var_info) => Ok::<_, AnalysisError>(var_info.data_type),
             _ => return Err(AnalysisError("lhs is not a variable".to_string())),
-        };
+        }?;
 
         // check if _lhs_type is the same as _rhs_type (or if _rhs_type can be converted to _lhs_type (int -> float))
         if (_lhs_type != _rhs_type
-            && !(_lhs_type == ast::DataType::Int && _rhs_type == ast::DataType::Float))
+            && !(_lhs_type == ast::DataType::Float && _rhs_type == ast::DataType::Int))
         {
             return Err(AnalysisError(
                 "lhs and rhs have different types".to_string(),
@@ -440,11 +498,35 @@ impl Analyzer {
         let _lhs_type = self.visit_expr(&mut bin_op_expr.lhs)?;
         let _rhs_type = self.visit_expr(&mut bin_op_expr.rhs)?;
 
-        // TODO: Datentyp berechnen und anpassen
+
+        // if lhs or rhs is void -> error
+        if _lhs_type == ast::DataType::Void || _rhs_type == ast::DataType::Void {
+            return Err(AnalysisError("cannot use void in binary operation".to_string()));
+        }
 
         equal_types(_lhs_type, _rhs_type)?;
 
-        Ok(_lhs_type)
+        match bin_op_expr.op {
+            ast::BinOp::Add | ast::BinOp::Sub | ast::BinOp::Mul | ast::BinOp::Div => {
+                if _lhs_type == ast::DataType::Bool {
+                    return Err(AnalysisError("expected type int or float".to_string()));
+                }
+                return Ok(_lhs_type);
+            }
+            ast::BinOp::LogAnd | ast::BinOp::LogOr => {
+                if _lhs_type != ast::DataType::Bool {
+                    return Err(AnalysisError("expected type bool".to_string()));
+                }
+                return Ok(_lhs_type);
+            }
+            ast::BinOp::Eq | ast::BinOp::Neq | ast::BinOp::Lt | ast::BinOp::Leq | ast::BinOp::Gt | ast::BinOp::Geq => {
+                // if _lhs_type == ast::DataType::Bool {
+                //     return Err(AnalysisError("expected type int or float".to_string()));
+                // }
+                return Ok(ast::DataType::Bool);
+            }
+        }
+
     }
 
     /// Analyzes an unary minus expression and returns its type.
@@ -453,8 +535,6 @@ impl Analyzer {
         inner_expr: &mut ast::Expr,
     ) -> Result<ast::DataType, AnalysisError> {
         let _expr_type = self.visit_expr(inner_expr)?;
-
-        // TODO: Datentyp berechnen und anpassen
 
         if(_expr_type != ast::DataType::Int && _expr_type != ast::DataType::Float) {
             return Err(AnalysisError("expected type int or float".to_string()));
@@ -468,8 +548,6 @@ impl Analyzer {
         &mut self,
         _res_ident: &mut ast::ResIdent,
     ) -> Result<ast::DataType, AnalysisError> {
-        // TODO: Datentyp berechnen und anpassen
-
         let _def_id = self.tab.resolve(_res_ident)?;
 
         _res_ident.set_res(_def_id);
