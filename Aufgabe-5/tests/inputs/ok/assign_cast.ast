@@ -1,0 +1,118 @@
+Program {
+    items: [
+        Func(
+            FuncDef {
+                return_type: Void,
+                ident: Ident(
+                    "main",
+                ),
+                params: [],
+                statements: [
+                    VarDef(
+                        VarDef {
+                            data_type: Int,
+                            res_ident: ResIdent {
+                                ident: Ident(
+                                    "i",
+                                ),
+                                res: None,
+                            },
+                            init: Some(
+                                Literal(
+                                    Int(
+                                        1,
+                                    ),
+                                ),
+                            ),
+                        },
+                    ),
+                    VarDef(
+                        VarDef {
+                            data_type: Float,
+                            res_ident: ResIdent {
+                                ident: Ident(
+                                    "x",
+                                ),
+                                res: None,
+                            },
+                            init: None,
+                        },
+                    ),
+                    Print(
+                        Expr(
+                            Assign(
+                                Assign {
+                                    lhs: ResIdent {
+                                        ident: Ident(
+                                            "x",
+                                        ),
+                                        res: None,
+                                    },
+                                    rhs: Var(
+                                        ResIdent {
+                                            ident: Ident(
+                                                "i",
+                                            ),
+                                            res: None,
+                                        },
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                    Print(
+                        Expr(
+                            BinaryOp(
+                                BinOpExpr {
+                                    op: Div,
+                                    lhs: Var(
+                                        ResIdent {
+                                            ident: Ident(
+                                                "x",
+                                            ),
+                                            res: None,
+                                        },
+                                    ),
+                                    rhs: Literal(
+                                        Int(
+                                            2,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                    Print(
+                        Expr(
+                            BinaryOp(
+                                BinOpExpr {
+                                    op: Div,
+                                    lhs: Assign(
+                                        Assign {
+                                            lhs: ResIdent {
+                                                ident: Ident(
+                                                    "x",
+                                                ),
+                                                res: None,
+                                            },
+                                            rhs: Literal(
+                                                Int(
+                                                    1,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    rhs: Literal(
+                                        Int(
+                                            2,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                ],
+            },
+        ),
+    ],
+}
