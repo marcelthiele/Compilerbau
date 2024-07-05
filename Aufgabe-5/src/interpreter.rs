@@ -22,7 +22,7 @@
 
 #![allow(dead_code)]
 
-use std::fmt::{self, Write};
+use std::{fmt::{self, Write}, ptr::null};
 
 use crate::{analysis, ast};
 use vm::{Value, Variable, VirtualMachine};
@@ -121,13 +121,35 @@ impl Interpreter<'_> {
     }
 
     /// Visits an `if` statement.
-    fn visit_if_stmt(&mut self, _stmt: &ast::IfStmt) -> Result<(), InterpretError> {
-        todo!("evaluate conditional");
+    fn visit_if_stmt(&mut self, stmt: &ast::IfStmt) -> Result<(), InterpretError> {
+        // todo!("evaluate conditional");
+        self.visit_expr(&stmt.cond)?;
+        self.visit_stmt(&stmt.if_true)?;
+        if let Some(if_false) = &stmt.if_false {
+            self.visit_stmt(if_false)?;
+        }
+
+        Ok(())
     }
 
     /// Visits a `for` statement.
     fn visit_for_stmt(&mut self, _stmt: &ast::ForStmt) -> Result<(), InterpretError> {
-        todo!("evaluate initializer, run the body and update until the condition evaluates to false or the function seeks to return");
+        // todo!("evaluate initializer, run the body and update until the condition evaluates to false or the function seeks to return");
+        
+
+        match &_stmt.init {
+            ast::ForInit::VarDef(var_def) => self.visit_var_def(var_def)?,
+            ast::ForInit::Assign(assign) => {
+                // Ignore the expression type.
+                self.visit_assign(assign)?;
+            }
+        }
+
+        self.visit_expr(&_stmt.cond)?;
+        self.visit_assign(&_stmt.update)?;
+        self.visit_stmt(&_stmt.body)?;
+        
+        Ok(())
     }
 
     /// Visits a `while` statement.
@@ -144,7 +166,16 @@ impl Interpreter<'_> {
 
     /// Visits a `return` statement, setting the return value.
     fn visit_return_stmt(&mut self, _expr: &Option<ast::Expr>) -> Result<(), InterpretError> {
-        todo!("set the return flag and return value if applicable");
+        // todo!("set the return flag and return value if applicable");
+
+        if let Some(expr) = _expr {
+            let value = self.visit_expr(expr)?;
+            self.vm.set_return(Some(value));
+            Ok(())
+        } else {
+            self.vm.set_return(None);
+            Ok(())
+        }
     }
 
     /// Visits a `print` statement, writing into the output string.
@@ -161,21 +192,66 @@ impl Interpreter<'_> {
     }
 
     /// Visits a variable definition and initializes it if possible.
-    fn visit_var_def(&mut self, _var_def: &ast::VarDef) -> Result<(), InterpretError> {
-        todo!("initialize the variable according to its definition, if applicable");
+    fn visit_var_def(&mut self, var_def: &ast::VarDef) -> Result<(), InterpretError>{
+        // todo!("initialize the variable according to its definition, if applicable");
+
+        let def_id = var_def.res_ident.get_res();
+        let def_info = &self.info.definitions[def_id];
+
+        if let Some(expr) = &var_def.init {
+            let value = self.visit_expr(expr)?;
+            
+            self.vm.store_var(def_info, value);
+
+            Ok(())
+        } else {
+            let none_value = match def_info {
+                analysis::DefInfo::GlobalVar(_) => Value::Int(0),
+                analysis::DefInfo::LocalVar(_) => Value::Int(0),
+                _ => panic!("Attempted to initialize a function"),
+            };
+            self.vm.store_var(def_info, none_value);
+            // TODO eigentlich sollte man hier nicht mit 0 initialisieren, sondern ohne Wert initialisieren
+
+            Ok(())
+        }
+
     }
 
     /// Visits a block of statements and evaluates each one.
     fn visit_block(&mut self, _block: &ast::Block) -> Result<(), InterpretError> {
-        todo!("visit the contained statements or return early if requested");
+        // todo!("visit the contained statements or return early if requested");
+
+
+
+
+        for stmt in &_block.statements {
+            self.visit_stmt(stmt)?;
+            if self.vm.is_returning() {
+                break;
+            }
+        }
+
+        
+
+        Ok(())
     }
 
     /// Visits a function call and evaluates it.
     fn visit_func_call(&mut self, call: &ast::FuncCall) -> Result<Variable, InterpretError> {
         // TODO: 1. Evaluate the arguments.
+
+        call.args.iter().for_each(|arg| {
+            self.visit_expr(arg).unwrap();
+        });
+
         // TODO: 2. Reserve space for the local variables and initialize the
         //          parameters with the argument values.
+        // let locals = vec![Variable::Uninit; self.info.definitions[call.res_ident.get_res()]];
+        // self.vm.push_frame(locals);
+
         // TODO: 3. Setup and later restore the stack-frame.
+
         // TODO: 4. Extract the return value.
 
         let def_id = call.res_ident.get_res();
@@ -193,7 +269,7 @@ impl Interpreter<'_> {
             }
         }
 
-        Ok(Variable::Uninit)
+        Ok(self.vm.take_return())
     }
 
     /// Visits a binary operation expression and evaluates it.
@@ -201,27 +277,269 @@ impl Interpreter<'_> {
         &mut self,
         _bin_op_expr: &ast::BinOpExpr,
     ) -> Result<Value, InterpretError> {
-        todo!("evaluate both operands and perform the operation, taking special care of potential integer overflow");
+        // todo!("evaluate both operands and perform the operation, taking special care of potential integer overflow");
+
+        let lhs = self.visit_expr(&_bin_op_expr.lhs)?;
+        let rhs = self.visit_expr(&_bin_op_expr.rhs)?;
+
+        match _bin_op_expr.op {
+            ast::BinOp::Add => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs.checked_add(rhs);
+
+                        // if res is None -> overflow -> throw error
+                        if res == None{
+                            return Err(InterpretError("Overflow".to_owned()));
+                        }
+
+                        Ok(Value::Int(res.unwrap()))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs + rhs;
+                        Ok(Value::Float(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for addition".to_owned()))
+                }
+            },
+            ast::BinOp::Sub => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs.checked_sub(rhs);
+
+                        // if res is None -> overflow -> throw error
+                        if res == None{
+                            return Err(InterpretError("Overflow".to_owned()));
+                        }
+
+
+                        Ok(Value::Int(res.unwrap()))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs - rhs;
+                        Ok(Value::Float(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for subtraction".to_owned()))
+                }
+            },
+            ast::BinOp::Mul => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs.checked_mul(rhs);
+
+                        // if res is None -> overflow -> throw error
+                        if res == None{
+                            return Err(InterpretError("Overflow".to_owned()));
+                        }
+
+                        Ok(Value::Int(res.unwrap()))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs * rhs;
+                        Ok(Value::Float(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for multiplication".to_owned()))
+                }
+            },
+            ast::BinOp::Div => {
+                if rhs == Value::Int(0) || rhs == Value::Float(0.0) {
+                    // Interpreter error: division by zero
+                    return Err(InterpretError("Division by zero".to_owned()));
+                }
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs.checked_div(rhs);
+
+                        // if res is None -> overflow -> throw error
+                        if res == None{
+                            return Err(InterpretError("Overflow".to_owned()));
+                        }
+
+                        Ok(Value::Int(res.unwrap()))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs / rhs;
+                        Ok(Value::Float(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for division".to_owned()))
+                }
+            },
+            ast::BinOp::LogAnd => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs & rhs;
+                        Ok(Value::Int(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for bitwise and".to_owned()))
+                }
+            },
+            ast::BinOp::LogOr => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs | rhs;
+                        Ok(Value::Int(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for bitwise or".to_owned()))
+                }
+            },
+            ast::BinOp::Eq => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs == rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs == rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for equality".to_owned()))
+                }
+            },
+            ast::BinOp::Neq => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs != rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs != rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for inequality".to_owned()))
+                }
+            },
+            ast::BinOp::Lt => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs < rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs < rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for less than".to_owned()))
+                }
+            },
+            ast::BinOp::Leq => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs <= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs <= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for less than or equal".to_owned()))
+                }
+            },
+            ast::BinOp::Gt => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs > rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs > rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for greater than".to_owned()))
+                }
+            },
+            ast::BinOp::Geq => {
+                match (lhs, rhs) {
+                    (Value::Int(lhs), Value::Int(rhs)) => {
+                        let res = lhs >= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs >= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    _ => Err(InterpretError("Invalid types for greater than or equal".to_owned()))
+                }
+            },
+        }
     }
 
     /// Visits a unary minus expression and evaluates it.
     fn visit_unary_minus(&mut self, _inner_expr: &ast::Expr) -> Result<Value, InterpretError> {
-        todo!("evaluate the operand and perform the operation, taking special care of integer overflow");
+        // Evaluate the operand.
+        let inner = self.visit_expr(_inner_expr)?;
+
+        match inner {
+            // Handle integer case with checked_neg to prevent overflow.
+            Value::Int(inner) => {
+                match inner.checked_neg() {
+                    Some(neg_value) => Ok(Value::Int(neg_value)),
+                    None => Err(InterpretError("Integer overflow".to_owned())),
+                }
+            },
+            // Floating-point negation does not overflow, directly negate.
+            Value::Float(inner) => Ok(Value::Float(-inner)),
+            // Error for unsupported types.
+            _ => Err(InterpretError("Invalid type for unary minus".to_owned())),
+        }
     }
+
 
     /// Visits an assignment expression and evaluates it.
     fn visit_assign(&mut self, _assign: &ast::Assign) -> Result<Value, InterpretError> {
-        todo!("evaluate the right-hand-side and store the result in the variable referred to by the left-hand-side");
+        // todo!("evaluate the right-hand-side and store the result in the variable referred to by the left-hand-side");
+
+        let rhs = self.visit_expr(&_assign.rhs)?;
+        // let lhs = self.ast[_assign.lhs];
+
+        let def_id = _assign.lhs.get_res();
+        let def_info = &self.info.definitions[def_id];
+        Ok(self.vm.store_var(def_info, rhs))
     }
 
     /// Visits a function call expression and evaluates it.
     fn visit_func_call_expr(&mut self, _call: &ast::FuncCall) -> Result<Value, InterpretError> {
-        todo!("evaluate the function call, returning its (non-void) result");
+        // todo!("evaluate the function call, returning its (non-void) result");
+
+        let def_id = _call.res_ident.get_res();
+        let func_info = match &self.info.definitions[def_id] {
+            analysis::DefInfo::Func(info) => info,
+            _ => unreachable!("function call resolves to non-function"),
+        };
+
+        let func_def = &self.ast[func_info.item_id];
+
+        // Evaluate the function body.
+        for stmt in &func_def.statements {
+            self.visit_stmt(stmt)?;
+            if self.vm.is_returning() {
+                // return Ok(self.vm.take_return());
+                // break;
+            }
+        };
+
+        let var = self.vm.take_return();
+        match var {
+            Variable::Init(value) => Ok(value),
+            Variable::Uninit => panic!("Attempted to read an uninitialized variable"),
+        }
+
     }
 
     /// Visits a variable and loads its value.
     fn visit_load_var(&mut self, _ident: &ast::ResIdent) -> Result<Value, InterpretError> {
-        todo!("read the value of the variable, taking care not to read an uninitialized value");
+        // todo!("read the value of the variable, taking care not to read an uninitialized value");
+
+        let def_id = _ident.get_res();
+        let def_info = &self.info.definitions[def_id];
+
+        let ret = self.vm.load_var(def_info);
+
+        let value = match ret {
+            Variable::Init(value) => value,
+            Variable::Uninit => panic!("Attempted to read an uninitialized variable"),
+        };
+
+        Ok(value)
     }
 }
 
