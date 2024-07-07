@@ -24,7 +24,7 @@
 
 use std::{fmt::{self, Write}, ptr::null};
 
-use crate::{analysis, ast};
+use crate::{analysis::{self, DefInfo}, ast};
 use vm::{Value, Variable, VirtualMachine};
 
 mod vm;
@@ -183,12 +183,24 @@ impl Interpreter<'_> {
         match print {
             ast::PrintStmt::String(string) => {
                 writeln!(self.output, "{string}").unwrap();
-                Ok(())
             }
             ast::PrintStmt::Expr(_expr) => {
-                todo!("evaluate the expression and print it, also taking care of special float values");
+                // todo!("evaluate the expression and print it, also taking care of special float values");
+                let value = self.visit_expr(_expr)?;
+                match value {
+                    Value::Int(val) => writeln!(self.output, "{val}").unwrap(),
+                    Value::Float(val) => {
+                        if val.fract() == 0.0 {
+                            writeln!(self.output, "{val}.0").unwrap();
+                        } else {
+                            writeln!(self.output, "{val}").unwrap();
+                        }
+                    },
+                    Value::Bool(val) => writeln!(self.output, "{val}").unwrap(),
+                }
             }
         }
+        Ok(())
     }
 
     /// Visits a variable definition and initializes it if possible.
@@ -239,28 +251,41 @@ impl Interpreter<'_> {
 
     /// Visits a function call and evaluates it.
     fn visit_func_call(&mut self, call: &ast::FuncCall) -> Result<Variable, InterpretError> {
-        // TODO: 1. Evaluate the arguments.
+        // 1. Evaluate the arguments.
+        let values = call.args.iter()
+            .map(|arg| self.visit_expr(arg))
+            .collect::<Result<Vec<Value>, InterpretError>>()?;
 
-        call.args.iter().for_each(|arg| {
-            self.visit_expr(arg).unwrap();
-        });
-
-        // TODO: 2. Reserve space for the local variables and initialize the
-        //          parameters with the argument values.
-        // let locals = vec![Variable::Uninit; self.info.definitions[call.res_ident.get_res()]];
-        // self.vm.push_frame(locals);
-
-        // TODO: 3. Setup and later restore the stack-frame.
-
-        // TODO: 4. Extract the return value.
-
+        // 2. Reserve space for the local variables and initialize the parameters with the argument values.
         let def_id = call.res_ident.get_res();
         let func_info = match &self.info.definitions[def_id] {
             analysis::DefInfo::Func(info) => info,
             _ => unreachable!("function call resolves to non-function"),
         };
-        let func_def = &self.ast[func_info.item_id];
 
+        for (i, value) in values.iter().enumerate() {
+            let param = &func_info.params()[i];
+            let def_info = &self.info.definitions[param.def_id()];
+            self.vm.store_var(def_info, value.clone());
+        }
+
+        // 3. Setup and later restore the stack-frame.
+        // Create a new frame for the function call.
+        let local_vars = func_info
+            .params()
+            .iter()
+            .map(|param| {
+                let def_id = param.def_id();
+                let def_info = &self.info.definitions[def_id];
+                self.vm.load_var(def_info)
+            })
+            .collect();
+
+        self.vm.push_frame(local_vars);
+
+        // 4. Extract the return value.
+        let func_def = &self.ast[func_info.item_id];
+        
         // Evaluate the function body.
         for stmt in &func_def.statements {
             self.visit_stmt(stmt)?;
@@ -269,8 +294,12 @@ impl Interpreter<'_> {
             }
         }
 
-        Ok(self.vm.take_return())
+        let return_value = self.vm.take_return();
+        self.vm.pop_frame();  // Restore the previous frame.
+
+        Ok(return_value)
     }
+
 
     /// Visits a binary operation expression and evaluates it.
     fn visit_bin_op_expr(
