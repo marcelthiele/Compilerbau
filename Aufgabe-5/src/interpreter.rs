@@ -123,10 +123,16 @@ impl Interpreter<'_> {
     /// Visits an `if` statement.
     fn visit_if_stmt(&mut self, stmt: &ast::IfStmt) -> Result<(), InterpretError> {
         // todo!("evaluate conditional");
-        self.visit_expr(&stmt.cond)?;
-        self.visit_stmt(&stmt.if_true)?;
-        if let Some(if_false) = &stmt.if_false {
-            self.visit_stmt(if_false)?;
+        let val = self.visit_expr(&stmt.cond)?;
+
+        if let Value::Bool(val) = val {
+            if val {
+                self.visit_stmt(&stmt.if_true)?;
+            } else if let Some(else_body) = &stmt.if_false {
+                self.visit_stmt(else_body)?;
+            }
+        } else {
+            return Err(InterpretError("Invalid type for if condition".to_owned()));
         }
 
         Ok(())
@@ -154,14 +160,24 @@ impl Interpreter<'_> {
 
     /// Visits a `while` statement.
     fn visit_while_stmt(&mut self, _stmt: &ast::WhileStmt) -> Result<(), InterpretError> {
-        todo!(
-            "run the body until the condition evaluates to false or the function seeks to return"
-        );
+        // todo!(
+        //     "run the body until the condition evaluates to false or the function seeks to return"
+        // );
+
+        self.visit_expr(&_stmt.cond)?;
+        self.visit_stmt(&_stmt.body)?;
+
+        Ok(())
     }
 
     /// Visits a `do-while` statement.
     fn visit_do_while_stmt(&mut self, _stmt: &ast::WhileStmt) -> Result<(), InterpretError> {
-        todo!("run the body at least once and then until the condition evaluates to false or the function seeks to return");
+        // todo!("run the body at least once and then until the condition evaluates to false or the function seeks to return");
+
+        self.visit_stmt(&_stmt.body)?;
+        self.visit_expr(&_stmt.cond)?;
+
+        Ok(())
     }
 
     /// Visits a `return` statement, setting the return value.
@@ -179,29 +195,39 @@ impl Interpreter<'_> {
     }
 
     /// Visits a `print` statement, writing into the output string.
-    fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretError> {
-        match print {
-            ast::PrintStmt::String(string) => {
-                writeln!(self.output, "{string}").unwrap();
-            }
-            ast::PrintStmt::Expr(_expr) => {
-                // todo!("evaluate the expression and print it, also taking care of special float values");
-                let value = self.visit_expr(_expr)?;
-                match value {
-                    Value::Int(val) => writeln!(self.output, "{val}").unwrap(),
-                    Value::Float(val) => {
-                        if val.fract() == 0.0 {
-                            writeln!(self.output, "{val}.0").unwrap();
+fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretError> {
+    match print {
+        ast::PrintStmt::String(string) => {
+            writeln!(self.output, "{string}").unwrap();
+        }
+        ast::PrintStmt::Expr(expr) => {
+            // Evaluate the expression and print it, also taking care of special float values.
+            let value = self.visit_expr(expr)?;
+            match value {
+                Value::Int(val) => writeln!(self.output, "{val}").unwrap(),
+                Value::Float(val) => {
+                    if val.is_infinite() {
+                        if val.is_sign_positive() {
+                            writeln!(self.output, "inf").unwrap();
                         } else {
-                            writeln!(self.output, "{val}").unwrap();
+                            writeln!(self.output, "-inf").unwrap();
                         }
-                    },
-                    Value::Bool(val) => writeln!(self.output, "{val}").unwrap(),
-                }
+                    } else if val.is_nan() {
+                        writeln!(self.output, "NaN").unwrap();
+                    } else if val.abs() >= 1e-4 && val.abs() < 1e6 {
+                        writeln!(self.output, "{val}").unwrap();
+                    } else {
+                        writeln!(self.output, "{val:e}").unwrap();
+                    }
+                },
+                Value::Bool(val) => writeln!(self.output, "{val}").unwrap(),
+                _ => return Err(InterpretError(format!("Cannot print value of this type"))),
             }
         }
-        Ok(())
     }
+    Ok(())
+}
+
 
     /// Visits a variable definition and initializes it if possible.
     fn visit_var_def(&mut self, var_def: &ast::VarDef) -> Result<(), InterpretError>{
@@ -328,6 +354,14 @@ impl Interpreter<'_> {
                         let res = lhs + rhs;
                         Ok(Value::Float(res))
                     },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) + rhs;
+                        Ok(Value::Float(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs + (rhs as f64);
+                        Ok(Value::Float(res))
+                    },
                     _ => Err(InterpretError("Invalid types for addition".to_owned()))
                 }
             },
@@ -348,6 +382,14 @@ impl Interpreter<'_> {
                         let res = lhs - rhs;
                         Ok(Value::Float(res))
                     },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) - rhs;
+                        Ok(Value::Float(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs - (rhs as f64);
+                        Ok(Value::Float(res))
+                    },
                     _ => Err(InterpretError("Invalid types for subtraction".to_owned()))
                 }
             },
@@ -365,6 +407,14 @@ impl Interpreter<'_> {
                     },
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs * rhs;
+                        Ok(Value::Float(res))
+                    },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) * rhs;
+                        Ok(Value::Float(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs * (rhs as f64);
                         Ok(Value::Float(res))
                     },
                     _ => Err(InterpretError("Invalid types for multiplication".to_owned()))
@@ -388,6 +438,14 @@ impl Interpreter<'_> {
                     },
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs / rhs;
+                        Ok(Value::Float(res))
+                    },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) / rhs;
+                        Ok(Value::Float(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs / (rhs as f64);
                         Ok(Value::Float(res))
                     },
                     _ => Err(InterpretError("Invalid types for division".to_owned()))
@@ -421,6 +479,10 @@ impl Interpreter<'_> {
                         let res = lhs == rhs;
                         Ok(Value::Bool(res))
                     },
+                    (Value::Bool(lhs), Value::Bool(rhs)) => {
+                        let res = lhs == rhs;
+                        Ok(Value::Bool(res))
+                    },
                     _ => Err(InterpretError("Invalid types for equality".to_owned()))
                 }
             },
@@ -431,6 +493,10 @@ impl Interpreter<'_> {
                         Ok(Value::Bool(res))
                     },
                     (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs != rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Bool(lhs), Value::Bool(rhs)) => {
                         let res = lhs != rhs;
                         Ok(Value::Bool(res))
                     },
@@ -447,6 +513,18 @@ impl Interpreter<'_> {
                         let res = lhs < rhs;
                         Ok(Value::Bool(res))
                     },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) < rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs < (rhs as f64);
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Bool(lhs), Value::Bool(rhs)) => {
+                        let res = lhs < rhs;
+                        Ok(Value::Bool(res))
+                    },
                     _ => Err(InterpretError("Invalid types for less than".to_owned()))
                 }
             },
@@ -458,6 +536,14 @@ impl Interpreter<'_> {
                     },
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs <= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) <= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs <= (rhs as f64);
                         Ok(Value::Bool(res))
                     },
                     _ => Err(InterpretError("Invalid types for less than or equal".to_owned()))
@@ -473,6 +559,18 @@ impl Interpreter<'_> {
                         let res = lhs > rhs;
                         Ok(Value::Bool(res))
                     },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) > rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs > (rhs as f64);
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Bool(lhs), Value::Bool(rhs)) => {
+                        let res = lhs > rhs;
+                        Ok(Value::Bool(res))
+                    },
                     _ => Err(InterpretError("Invalid types for greater than".to_owned()))
                 }
             },
@@ -483,6 +581,18 @@ impl Interpreter<'_> {
                         Ok(Value::Bool(res))
                     },
                     (Value::Float(lhs), Value::Float(rhs)) => {
+                        let res = lhs >= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) >= rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs >= (rhs as f64);
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Bool(lhs), Value::Bool(rhs)) => {
                         let res = lhs >= rhs;
                         Ok(Value::Bool(res))
                     },
@@ -549,7 +659,7 @@ impl Interpreter<'_> {
         let var = self.vm.take_return();
         match var {
             Variable::Init(value) => Ok(value),
-            Variable::Uninit => panic!("Attempted to read an uninitialized variable"),
+            Variable::Uninit => Err(InterpretError("Attempted to read an uninitialized variable".to_owned())),
         }
 
     }
@@ -565,7 +675,7 @@ impl Interpreter<'_> {
 
         let value = match ret {
             Variable::Init(value) => value,
-            Variable::Uninit => panic!("Attempted to read an uninitialized variable"),
+            Variable::Uninit => Err(InterpretError("Attempted to read an uninitialized variable".to_owned()))?,
         };
 
         Ok(value)
