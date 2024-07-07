@@ -300,14 +300,10 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
         let local_vars = func_info
             .params()
             .iter()
-            .map(|param| {
-                let def_id = param.def_id();
-                let def_info = &self.info.definitions[def_id];
-                self.vm.load_var(def_info)
-            })
-            .collect();
-
+            .map(|_| Variable::Uninit)  // Initialize each local variable to `Uninit` or a suitable default
+            .collect::<Vec<_>>();
         self.vm.push_frame(local_vars);
+
 
         // 4. Extract the return value.
         let func_def = &self.ast[func_info.item_id];
@@ -421,13 +417,15 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
                 }
             },
             ast::BinOp::Div => {
-                if rhs == Value::Int(0) || rhs == Value::Float(0.0) {
-                    // Interpreter error: division by zero
-                    return Err(InterpretError("Division by zero".to_owned()));
-                }
+                
                 match (lhs, rhs) {
                     (Value::Int(lhs), Value::Int(rhs)) => {
                         let res = lhs.checked_div(rhs);
+
+                        if rhs == 0 {
+                            // Interpreter error: division by zero
+                            return Err(InterpretError("Division by zero".to_owned()));
+                        }
 
                         // if res is None -> overflow -> throw error
                         if res == None{
@@ -479,6 +477,14 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
                         let res = lhs == rhs;
                         Ok(Value::Bool(res))
                     },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) == rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs == (rhs as f64);
+                        Ok(Value::Bool(res))
+                    },
                     (Value::Bool(lhs), Value::Bool(rhs)) => {
                         let res = lhs == rhs;
                         Ok(Value::Bool(res))
@@ -494,6 +500,14 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
                     },
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs != rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Int(lhs), Value::Float(rhs)) => {
+                        let res = (lhs as f64) != rhs;
+                        Ok(Value::Bool(res))
+                    },
+                    (Value::Float(lhs), Value::Int(rhs)) => {
+                        let res = lhs != (rhs as f64);
                         Ok(Value::Bool(res))
                     },
                     (Value::Bool(lhs), Value::Bool(rhs)) => {
