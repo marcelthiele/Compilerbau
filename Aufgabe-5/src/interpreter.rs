@@ -22,9 +22,15 @@
 
 #![allow(dead_code)]
 
-use std::{fmt::{self, Write}, ptr::null};
+use std::{
+    fmt::{self, Write},
+    ptr::null, sync::Condvar,
+};
 
-use crate::{analysis::{self, DefInfo}, ast};
+use crate::{
+    analysis::{self, DefInfo},
+    ast,
+};
 use vm::{Value, Variable, VirtualMachine};
 
 mod vm;
@@ -141,8 +147,6 @@ impl Interpreter<'_> {
     /// Visits a `for` statement.
     fn visit_for_stmt(&mut self, _stmt: &ast::ForStmt) -> Result<(), InterpretError> {
         // todo!("evaluate initializer, run the body and update until the condition evaluates to false or the function seeks to return");
-        
-
         match &_stmt.init {
             ast::ForInit::VarDef(var_def) => self.visit_var_def(var_def)?,
             ast::ForInit::Assign(assign) => {
@@ -151,31 +155,41 @@ impl Interpreter<'_> {
             }
         }
 
-        self.visit_expr(&_stmt.cond)?;
-        self.visit_assign(&_stmt.update)?;
-        self.visit_stmt(&_stmt.body)?;
-        
+        while let Value::Bool(true) = self.visit_expr(&_stmt.cond)? {
+            self.visit_stmt(&_stmt.body)?;
+            if self.vm.is_returning() {
+                break;
+            }
+            self.visit_assign(&_stmt.update)?;
+        }
         Ok(())
     }
 
     /// Visits a `while` statement.
-    fn visit_while_stmt(&mut self, _stmt: &ast::WhileStmt) -> Result<(), InterpretError> {
+    fn visit_while_stmt(&mut self, stmt: &ast::WhileStmt) -> Result<(), InterpretError> {
         // todo!(
         //     "run the body until the condition evaluates to false or the function seeks to return"
         // );
 
-        self.visit_expr(&_stmt.cond)?;
-        self.visit_stmt(&_stmt.body)?;
+        while Value::Bool(true) == self.visit_expr(&stmt.cond)? {
+            self.visit_stmt(&stmt.body)?;
+
+            if self.vm.is_returning() {
+                break;
+            }
+        }
 
         Ok(())
     }
 
     /// Visits a `do-while` statement.
-    fn visit_do_while_stmt(&mut self, _stmt: &ast::WhileStmt) -> Result<(), InterpretError> {
+    fn visit_do_while_stmt(&mut self, stmt: &ast::WhileStmt) -> Result<(), InterpretError> {
         // todo!("run the body at least once and then until the condition evaluates to false or the function seeks to return");
+        self.visit_stmt(&stmt.body)?;
 
-        self.visit_stmt(&_stmt.body)?;
-        self.visit_expr(&_stmt.cond)?;
+        while Value::Bool(true) == self.visit_expr(&stmt.cond)? {
+            self.visit_stmt(&stmt.body)?;
+        }
 
         Ok(())
     }
@@ -195,42 +209,26 @@ impl Interpreter<'_> {
     }
 
     /// Visits a `print` statement, writing into the output string.
-fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretError> {
-    match print {
-        ast::PrintStmt::String(string) => {
-            writeln!(self.output, "{string}").unwrap();
-        }
-        ast::PrintStmt::Expr(expr) => {
-            // Evaluate the expression and print it, also taking care of special float values.
-            let value = self.visit_expr(expr)?;
-            match value {
-                Value::Int(val) => writeln!(self.output, "{val}").unwrap(),
-                Value::Float(val) => {
-                    if val.is_infinite() {
-                        if val.is_sign_positive() {
-                            writeln!(self.output, "inf").unwrap();
-                        } else {
-                            writeln!(self.output, "-inf").unwrap();
-                        }
-                    } else if val.is_nan() {
-                        writeln!(self.output, "NaN").unwrap();
-                    } else if val.abs() >= 1e-4 && val.abs() < 1e6 {
-                        writeln!(self.output, "{val}").unwrap();
-                    } else {
-                        writeln!(self.output, "{val:e}").unwrap();
-                    }
-                },
-                Value::Bool(val) => writeln!(self.output, "{val}").unwrap(),
-                _ => return Err(InterpretError(format!("Cannot print value of this type"))),
+    fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretError> {
+        match print {
+            ast::PrintStmt::Expr(expr) => {
+                match self.visit_expr(expr)? {
+                    Value::Int(integer_to_print) => writeln!(self.output, "{integer_to_print}"),
+                    Value::Float(float_to_print) => writeln!(self.output, "{}", format!("{float_to_print:?}").to_lowercase()),
+                    Value::Bool(bool_to_print) => writeln!(self.output, "{bool_to_print}"),
+                }
+                .unwrap();
+                Ok(())
+            },
+            ast::PrintStmt::String(str_to_print) => {
+                writeln!(self.output, "{str_to_print}").unwrap();
+                Ok(())
             }
         }
     }
-    Ok(())
-}
-
 
     /// Visits a variable definition and initializes it if possible.
-    fn visit_var_def(&mut self, var_def: &ast::VarDef) -> Result<(), InterpretError>{
+    fn visit_var_def(&mut self, var_def: &ast::VarDef) -> Result<(), InterpretError> {
         // todo!("initialize the variable according to its definition, if applicable");
 
         let def_id = var_def.res_ident.get_res();
@@ -238,30 +236,15 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
 
         if let Some(expr) = &var_def.init {
             let value = self.visit_expr(expr)?;
-            
+
             self.vm.store_var(def_info, value);
-
-            Ok(())
-        } else {
-            let none_value = match def_info {
-                analysis::DefInfo::GlobalVar(_) => Value::Int(0),
-                analysis::DefInfo::LocalVar(_) => Value::Int(0),
-                _ => panic!("Attempted to initialize a function"),
-            };
-            self.vm.store_var(def_info, none_value);
-            // TODO eigentlich sollte man hier nicht mit 0 initialisieren, sondern ohne Wert initialisieren
-
-            Ok(())
         }
-
+        Ok(())
     }
 
     /// Visits a block of statements and evaluates each one.
     fn visit_block(&mut self, _block: &ast::Block) -> Result<(), InterpretError> {
         // todo!("visit the contained statements or return early if requested");
-
-
-
 
         for stmt in &_block.statements {
             self.visit_stmt(stmt)?;
@@ -270,15 +253,15 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
             }
         }
 
-        
-
         Ok(())
     }
 
     /// Visits a function call and evaluates it.
     fn visit_func_call(&mut self, call: &ast::FuncCall) -> Result<Variable, InterpretError> {
         // 1. Evaluate the arguments.
-        let values = call.args.iter()
+        let values = call
+            .args
+            .iter()
             .map(|arg| self.visit_expr(arg))
             .collect::<Result<Vec<Value>, InterpretError>>()?;
 
@@ -289,25 +272,29 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
             _ => unreachable!("function call resolves to non-function"),
         };
 
-        for (i, value) in values.iter().enumerate() {
-            let param = &func_info.params()[i];
-            let def_info = &self.info.definitions[param.def_id()];
-            self.vm.store_var(def_info, value.clone());
-        }
-
         // 3. Setup and later restore the stack-frame.
         // Create a new frame for the function call.
-        let local_vars = func_info
-            .params()
-            .iter()
-            .map(|_| Variable::Uninit)  // Initialize each local variable to `Uninit` or a suitable default
-            .collect::<Vec<_>>();
-        self.vm.push_frame(local_vars);
 
+        let mut local_vars: Vec<Variable> = values
+            .iter()
+            .zip(func_info.params())
+            .map(|(value, param)| {
+                let data_type = match &self.info[param.0] {
+                    DefInfo::Func(_) => todo!(),
+                    DefInfo::GlobalVar(_) => todo!(),
+                    DefInfo::LocalVar(info) => info.data_type,
+                };
+                Variable::Init(value.clone().cast(data_type))
+            })
+            .collect();
+
+        local_vars.extend(vec![Variable::Uninit; func_info.local_vars.len()]);
+
+        self.vm.push_frame(local_vars);
 
         // 4. Extract the return value.
         let func_def = &self.ast[func_info.item_id];
-        
+
         // Evaluate the function body.
         for stmt in &func_def.statements {
             self.visit_stmt(stmt)?;
@@ -317,11 +304,43 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
         }
 
         let return_value = self.vm.take_return();
-        self.vm.pop_frame();  // Restore the previous frame.
+        self.vm.pop_frame(); // Restore the previous frame.
+
+        match func_info.return_type {
+            ast::DataType::Void => {
+                if let Variable::Uninit = return_value {
+                    Ok(())
+                } else {
+                    Err(InterpretError("Tried to return value from void Function".to_owned()))
+                }
+            }
+            ast::DataType::Bool => {
+                if let Variable::Init(Value::Bool(_)) = return_value {
+                    Ok(())
+                } else {
+                    Err(InterpretError("Tried to return wrong type - should return Bool".to_owned()))
+                }
+            }
+            ast::DataType::Int => {
+                if let Variable::Init(Value::Int(_)) = return_value {
+                    Ok(())
+                } else {
+                    Err(InterpretError("Tried to return wrong type - should return Int".to_owned()))
+                }
+            }
+            ast::DataType::Float => {
+                if let Variable::Init(Value::Float(_)) = return_value {
+                    Ok(())
+                } else if let Variable::Init(Value::Int(_)) = return_value {
+                    Ok(())
+                } else {
+                    Err(InterpretError("Tried to return wrong type - should return Float".to_owned()))
+                }
+            }
+        }?;
 
         Ok(return_value)
     }
-
 
     /// Visits a binary operation expression and evaluates it.
     fn visit_bin_op_expr(
@@ -340,82 +359,83 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
                         let res = lhs.checked_add(rhs);
 
                         // if res is None -> overflow -> throw error
-                        if res == None{
+                        if res == None {
                             return Err(InterpretError("Overflow".to_owned()));
                         }
 
                         Ok(Value::Int(res.unwrap()))
-                    },
+                    }
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs + rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Int(lhs), Value::Float(rhs)) => {
                         let res = (lhs as f64) + rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Float(lhs), Value::Int(rhs)) => {
                         let res = lhs + (rhs as f64);
                         Ok(Value::Float(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for addition".to_owned()))
+                    }
+                    _ => Err(InterpretError("Invalid types for addition".to_owned())),
                 }
-            },
+            }
             ast::BinOp::Sub => {
                 match (lhs, rhs) {
                     (Value::Int(lhs), Value::Int(rhs)) => {
                         let res = lhs.checked_sub(rhs);
 
                         // if res is None -> overflow -> throw error
-                        if res == None{
+                        if res == None {
                             return Err(InterpretError("Overflow".to_owned()));
                         }
 
-
                         Ok(Value::Int(res.unwrap()))
-                    },
+                    }
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs - rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Int(lhs), Value::Float(rhs)) => {
                         let res = (lhs as f64) - rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Float(lhs), Value::Int(rhs)) => {
                         let res = lhs - (rhs as f64);
                         Ok(Value::Float(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for subtraction".to_owned()))
+                    }
+                    _ => Err(InterpretError("Invalid types for subtraction".to_owned())),
                 }
-            },
+            }
             ast::BinOp::Mul => {
                 match (lhs, rhs) {
                     (Value::Int(lhs), Value::Int(rhs)) => {
                         let res = lhs.checked_mul(rhs);
 
                         // if res is None -> overflow -> throw error
-                        if res == None{
+                        if res == None {
                             return Err(InterpretError("Overflow".to_owned()));
                         }
 
                         Ok(Value::Int(res.unwrap()))
-                    },
+                    }
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs * rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Int(lhs), Value::Float(rhs)) => {
                         let res = (lhs as f64) * rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Float(lhs), Value::Int(rhs)) => {
                         let res = lhs * (rhs as f64);
                         Ok(Value::Float(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for multiplication".to_owned()))
+                    }
+                    _ => Err(InterpretError(
+                        "Invalid types for multiplication".to_owned(),
+                    )),
                 }
-            },
+            }
             ast::BinOp::Div => {
                 
                 match (lhs, rhs) {
@@ -428,190 +448,186 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
                         }
 
                         // if res is None -> overflow -> throw error
-                        if res == None{
+                        if res == None {
                             return Err(InterpretError("Overflow".to_owned()));
                         }
 
                         Ok(Value::Int(res.unwrap()))
-                    },
+                    }
                     (Value::Float(lhs), Value::Float(rhs)) => {
                         let res = lhs / rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Int(lhs), Value::Float(rhs)) => {
                         let res = (lhs as f64) / rhs;
                         Ok(Value::Float(res))
-                    },
+                    }
                     (Value::Float(lhs), Value::Int(rhs)) => {
                         let res = lhs / (rhs as f64);
                         Ok(Value::Float(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for division".to_owned()))
+                    }
+                    _ => Err(InterpretError("Invalid types for division".to_owned())),
                 }
+            }
+            ast::BinOp::LogAnd => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs & rhs;
+                    Ok(Value::Int(res))
+                }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs & rhs;
+                    Ok(Value::Bool(res))
+                },
+                _ => Err(InterpretError("Invalid types for bitwise and".to_owned())),
             },
-            ast::BinOp::LogAnd => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs & rhs;
-                        Ok(Value::Int(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for bitwise and".to_owned()))
+            ast::BinOp::LogOr => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs | rhs;
+                    Ok(Value::Int(res))
                 }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs || rhs;
+                    Ok(Value::Bool(res))
+                },
+                _ => Err(InterpretError("Invalid types for bitwise or".to_owned())),
             },
-            ast::BinOp::LogOr => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs | rhs;
-                        Ok(Value::Int(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for bitwise or".to_owned()))
+            ast::BinOp::Eq => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs == rhs;
+                    Ok(Value::Bool(res))
                 }
+                (Value::Float(lhs), Value::Float(rhs)) => {
+                    let res = lhs == rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs == rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Int(lhs), Value::Float(rhs)) => {
+                    let res = (lhs as f64) == rhs;
+                    Ok(Value::Bool(res))
+                },
+                (Value::Float(lhs), Value::Int(rhs)) => {
+                    let res = lhs == (rhs as f64);
+                    Ok(Value::Bool(res))
+                },
+                _ => Err(InterpretError("Invalid types for equality".to_owned())),
             },
-            ast::BinOp::Eq => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs == rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Float(rhs)) => {
-                        let res = lhs == rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Int(lhs), Value::Float(rhs)) => {
-                        let res = (lhs as f64) == rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Int(rhs)) => {
-                        let res = lhs == (rhs as f64);
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Bool(lhs), Value::Bool(rhs)) => {
-                        let res = lhs == rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for equality".to_owned()))
+            ast::BinOp::Neq => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs != rhs;
+                    Ok(Value::Bool(res))
                 }
+                (Value::Float(lhs), Value::Float(rhs)) => {
+                    let res = lhs != rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs != rhs;
+                    Ok(Value::Bool(res))
+                },
+                (Value::Int(lhs), Value::Float(rhs)) => {
+                    let res = (lhs as f64) != rhs;
+                    Ok(Value::Bool(res))
+                },
+                (Value::Float(lhs), Value::Int(rhs)) => {
+                    let res = lhs != (rhs as f64);
+                    Ok(Value::Bool(res))
+                },
+                _ => Err(InterpretError("Invalid types for inequality".to_owned())),
             },
-            ast::BinOp::Neq => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs != rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Float(rhs)) => {
-                        let res = lhs != rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Int(lhs), Value::Float(rhs)) => {
-                        let res = (lhs as f64) != rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Int(rhs)) => {
-                        let res = lhs != (rhs as f64);
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Bool(lhs), Value::Bool(rhs)) => {
-                        let res = lhs != rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for inequality".to_owned()))
+            ast::BinOp::Lt => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs < rhs;
+                    Ok(Value::Bool(res))
                 }
+                (Value::Float(lhs), Value::Float(rhs)) => {
+                    let res = lhs < rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Int(lhs), Value::Float(rhs)) => {
+                    let res = (lhs as f64) < rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Float(lhs), Value::Int(rhs)) => {
+                    let res = lhs < (rhs as f64);
+                    Ok(Value::Bool(res))
+                }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs < rhs;
+                    Ok(Value::Bool(res))
+                }
+                _ => Err(InterpretError("Invalid types for less than".to_owned())),
             },
-            ast::BinOp::Lt => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs < rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Float(rhs)) => {
-                        let res = lhs < rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Int(lhs), Value::Float(rhs)) => {
-                        let res = (lhs as f64) < rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Int(rhs)) => {
-                        let res = lhs < (rhs as f64);
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Bool(lhs), Value::Bool(rhs)) => {
-                        let res = lhs < rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for less than".to_owned()))
+            ast::BinOp::Leq => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs <= rhs;
+                    Ok(Value::Bool(res))
                 }
+                (Value::Float(lhs), Value::Float(rhs)) => {
+                    let res = lhs <= rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Int(lhs), Value::Float(rhs)) => {
+                    let res = (lhs as f64) <= rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Float(lhs), Value::Int(rhs)) => {
+                    let res = lhs <= (rhs as f64);
+                    Ok(Value::Bool(res))
+                }
+                _ => Err(InterpretError(
+                    "Invalid types for less than or equal".to_owned(),
+                )),
             },
-            ast::BinOp::Leq => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs <= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Float(rhs)) => {
-                        let res = lhs <= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Int(lhs), Value::Float(rhs)) => {
-                        let res = (lhs as f64) <= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Int(rhs)) => {
-                        let res = lhs <= (rhs as f64);
-                        Ok(Value::Bool(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for less than or equal".to_owned()))
+            ast::BinOp::Gt => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs > rhs;
+                    Ok(Value::Bool(res))
                 }
+                (Value::Float(lhs), Value::Float(rhs)) => {
+                    let res = lhs > rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Int(lhs), Value::Float(rhs)) => {
+                    let res = (lhs as f64) > rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Float(lhs), Value::Int(rhs)) => {
+                    let res = lhs > (rhs as f64);
+                    Ok(Value::Bool(res))
+                }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs > rhs;
+                    Ok(Value::Bool(res))
+                }
+                _ => Err(InterpretError("Invalid types for greater than".to_owned())),
             },
-            ast::BinOp::Gt => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs > rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Float(rhs)) => {
-                        let res = lhs > rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Int(lhs), Value::Float(rhs)) => {
-                        let res = (lhs as f64) > rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Int(rhs)) => {
-                        let res = lhs > (rhs as f64);
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Bool(lhs), Value::Bool(rhs)) => {
-                        let res = lhs > rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for greater than".to_owned()))
+            ast::BinOp::Geq => match (lhs, rhs) {
+                (Value::Int(lhs), Value::Int(rhs)) => {
+                    let res = lhs >= rhs;
+                    Ok(Value::Bool(res))
                 }
-            },
-            ast::BinOp::Geq => {
-                match (lhs, rhs) {
-                    (Value::Int(lhs), Value::Int(rhs)) => {
-                        let res = lhs >= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Float(rhs)) => {
-                        let res = lhs >= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Int(lhs), Value::Float(rhs)) => {
-                        let res = (lhs as f64) >= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Float(lhs), Value::Int(rhs)) => {
-                        let res = lhs >= (rhs as f64);
-                        Ok(Value::Bool(res))
-                    },
-                    (Value::Bool(lhs), Value::Bool(rhs)) => {
-                        let res = lhs >= rhs;
-                        Ok(Value::Bool(res))
-                    },
-                    _ => Err(InterpretError("Invalid types for greater than or equal".to_owned()))
+                (Value::Float(lhs), Value::Float(rhs)) => {
+                    let res = lhs >= rhs;
+                    Ok(Value::Bool(res))
                 }
+                (Value::Int(lhs), Value::Float(rhs)) => {
+                    let res = (lhs as f64) >= rhs;
+                    Ok(Value::Bool(res))
+                }
+                (Value::Float(lhs), Value::Int(rhs)) => {
+                    let res = lhs >= (rhs as f64);
+                    Ok(Value::Bool(res))
+                }
+                (Value::Bool(lhs), Value::Bool(rhs)) => {
+                    let res = lhs >= rhs;
+                    Ok(Value::Bool(res))
+                }
+                _ => Err(InterpretError(
+                    "Invalid types for greater than or equal".to_owned(),
+                )),
             },
         }
     }
@@ -623,11 +639,9 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
 
         match inner {
             // Handle integer case with checked_neg to prevent overflow.
-            Value::Int(inner) => {
-                match inner.checked_neg() {
-                    Some(neg_value) => Ok(Value::Int(neg_value)),
-                    None => Err(InterpretError("Integer overflow".to_owned())),
-                }
+            Value::Int(inner) => match inner.checked_neg() {
+                Some(neg_value) => Ok(Value::Int(neg_value)),
+                None => Err(InterpretError("Integer overflow".to_owned())),
             },
             // Floating-point negation does not overflow, directly negate.
             Value::Float(inner) => Ok(Value::Float(-inner)),
@@ -635,7 +649,6 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
             _ => Err(InterpretError("Invalid type for unary minus".to_owned())),
         }
     }
-
 
     /// Visits an assignment expression and evaluates it.
     fn visit_assign(&mut self, _assign: &ast::Assign) -> Result<Value, InterpretError> {
@@ -652,30 +665,18 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
     /// Visits a function call expression and evaluates it.
     fn visit_func_call_expr(&mut self, _call: &ast::FuncCall) -> Result<Value, InterpretError> {
         // todo!("evaluate the function call, returning its (non-void) result");
+        let var = self.visit_func_call(_call)?;
 
-        let def_id = _call.res_ident.get_res();
-        let func_info = match &self.info.definitions[def_id] {
-            analysis::DefInfo::Func(info) => info,
-            _ => unreachable!("function call resolves to non-function"),
-        };
+        let return_type = match &self.info[_call.res_ident.get_res()] {
+            analysis::DefInfo::Func(f) => Ok(f.return_type),
+            _ => Err(InterpretError("Tried to call Variable - not a function".to_owned())),
+        }?;
 
-        let func_def = &self.ast[func_info.item_id];
-
-        // Evaluate the function body.
-        for stmt in &func_def.statements {
-            self.visit_stmt(stmt)?;
-            if self.vm.is_returning() {
-                // return Ok(self.vm.take_return());
-                // break;
-            }
-        };
-
-        let var = self.vm.take_return();
+        // println!("Trying to cast {var:?} to {r_type:?}");
         match var {
-            Variable::Init(value) => Ok(value),
-            Variable::Uninit => Err(InterpretError("Attempted to read an uninitialized variable".to_owned())),
+            Variable::Init(val) => Ok(val.cast(return_type)),
+            Variable::Uninit => Err(InterpretError("No Return from Function".to_owned())),
         }
-
     }
 
     /// Visits a variable and loads its value.
@@ -689,7 +690,9 @@ fn visit_print_stmt(&mut self, print: &ast::PrintStmt) -> Result<(), InterpretEr
 
         let value = match ret {
             Variable::Init(value) => value,
-            Variable::Uninit => Err(InterpretError("Attempted to read an uninitialized variable".to_owned()))?,
+            Variable::Uninit => Err(InterpretError(
+                "Attempted to read an uninitialized variable".to_owned(),
+            ))?,
         };
 
         Ok(value)
